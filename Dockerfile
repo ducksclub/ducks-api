@@ -1,17 +1,20 @@
-FROM python:3.11-slim
-
+FROM node:22-alpine AS deps
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run prisma:generate && npm run build
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY app ./app
-COPY scripts ./scripts
-COPY .env.example ./.env.example
-
-EXPOSE 8000
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+FROM node:22-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+COPY package*.json ./
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/prisma ./prisma
+EXPOSE 4000
+CMD ["node", "dist/src/server.js"]

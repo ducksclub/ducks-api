@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String              @id @default(cuid())
+  email         String              @unique
+  passwordHash  String
+  name          String?
+  role          String              @default("user")
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  registrations EventRegistration[]
+  ratings       Rating[]
+  feedback      Feedback[]
+
+  @@index([role])
+}
+
+model Event {
+  id               String              @id @default(cuid())
+  title            String
+  description      String?
+  gameType         String
+  startsAt         DateTime
+  endsAt           DateTime?
+  location         String?
+  participantLimit Int
+  pointsForParticipation Int           @default(10)
+  status           String              @default("published")
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  registrations    EventRegistration[]
+
+  @@index([gameType, startsAt])
+  @@index([status])
+}
+
+model EventRegistration {
+  id          String             @id @default(cuid())
+  userId      String
+  eventId     String
+  status      String             @default("active")
+  createdAt   DateTime           @default(now())
+  cancelledAt DateTime?
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event       Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId, status])
+  @@index([userId, status])
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  userId    String
+  gameType  String
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameType])
+  @@index([gameType, points])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String?
+  name      String?
+  email     String?
+  message   String
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model ContentPage {
+  id        String         @id @default(cuid())
+  key       String   @unique
+  title     String
+  body      String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
