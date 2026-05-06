@@ -1,51 +1,75 @@
-import { Router } from "express";
-import { authenticate, authorize } from "../../common/middleware/auth.js";
-import { validate } from "../../common/middleware/validate.js";
-import { Roles } from "../../common/types/domain.js";
-import { asyncHandler } from "../../common/utils/async-handler.js";
+import { Router } from 'express'
+import { authenticate, authorize } from '../../common/middleware/auth.js'
+import { validate } from '../../common/middleware/validate.js'
+import { Roles } from '../../common/types/domain.js'
+import { asyncHandler } from '../../common/utils/async-handler.js'
 import {
   addParticipant,
   cancelEventRegistration,
   createEvent,
   deleteEvent,
+  getEvent,
   listEvents,
   registerForEvent,
   removeParticipant,
-  updateEvent
-} from "./events.controller.js";
+  updateEvent,
+} from './events.controller.js'
 import {
   createEventSchema,
   eventIdParamsSchema,
   eventListQuerySchema,
   manageParticipantSchema,
-  updateEventSchema
-} from "./events.schemas.js";
+  updateEventSchema,
+} from './events.schemas.js'
 
-export const eventsRouter = Router();
+export const eventsRouter = Router()
 
-eventsRouter.get("/", validate({ query: eventListQuerySchema }), asyncHandler(listEvents));
-eventsRouter.post("/", authenticate, authorize(Roles.admin), validate({ body: createEventSchema }), asyncHandler(createEvent));
+eventsRouter.get('/:id', validate({ params: eventIdParamsSchema }), asyncHandler(getEvent))
+eventsRouter.get('/', validate({ query: eventListQuerySchema }), asyncHandler(listEvents))
+eventsRouter.post(
+  '/',
+  authenticate,
+  authorize(Roles.admin),
+  validate({ body: createEventSchema }),
+  asyncHandler(createEvent),
+)
 eventsRouter.patch(
-  "/:id",
+  '/:id',
   authenticate,
   authorize(Roles.admin),
   validate({ params: eventIdParamsSchema, body: updateEventSchema }),
-  asyncHandler(updateEvent)
-);
-eventsRouter.delete("/:id", authenticate, authorize(Roles.admin), validate({ params: eventIdParamsSchema }), asyncHandler(deleteEvent));
-eventsRouter.post("/:id/register", authenticate, validate({ params: eventIdParamsSchema }), asyncHandler(registerForEvent));
-eventsRouter.delete("/:id/register", authenticate, validate({ params: eventIdParamsSchema }), asyncHandler(cancelEventRegistration));
-eventsRouter.post(
-  "/:id/participants",
-  authenticate,
-  authorize(Roles.admin),
-  validate({ params: eventIdParamsSchema, body: manageParticipantSchema }),
-  asyncHandler(addParticipant)
-);
+  asyncHandler(updateEvent),
+)
 eventsRouter.delete(
-  "/:id/participants",
+  '/:id',
+  authenticate,
+  authorize(Roles.admin),
+  validate({ params: eventIdParamsSchema }),
+  asyncHandler(deleteEvent),
+)
+eventsRouter.post(
+  '/:id/register',
+  authenticate,
+  validate({ params: eventIdParamsSchema }),
+  asyncHandler(registerForEvent),
+)
+eventsRouter.delete(
+  '/:id/register',
+  authenticate,
+  validate({ params: eventIdParamsSchema }),
+  asyncHandler(cancelEventRegistration),
+)
+eventsRouter.post(
+  '/:id/participants',
   authenticate,
   authorize(Roles.admin),
   validate({ params: eventIdParamsSchema, body: manageParticipantSchema }),
-  asyncHandler(removeParticipant)
-);
+  asyncHandler(addParticipant),
+)
+eventsRouter.delete(
+  '/:id/participants',
+  authenticate,
+  authorize(Roles.admin),
+  validate({ params: eventIdParamsSchema, body: manageParticipantSchema }),
+  asyncHandler(removeParticipant),
+)

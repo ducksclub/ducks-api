@@ -9,6 +9,8 @@ datasource db {
 
 model User {
   id            String              @id @default(cuid())
+  avatarUrl     String?
+  avatarHash    String?
   email         String              @unique
   passwordHash  String
   name          String?
@@ -23,33 +25,34 @@ model User {
 }
 
 model Event {
-  id               String              @id @default(cuid())
-  title            String
-  description      String?
-  gameType         String
-  startsAt         DateTime
-  endsAt           DateTime?
-  location         String?
-  participantLimit Int
-  pointsForParticipation Int           @default(10)
-  status           String              @default("published")
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  registrations    EventRegistration[]
+  id                     String              @id @default(cuid())
+  imageUrl               String?
+  imageHash              String?
+  address                String
+  gameType               String
+  startsAt               DateTime
+  endsAt                 DateTime?
+  location               String?
+  participantLimit       Int
+  pointsForParticipation Int                 @default(10)
+  status                 String              @default("published")
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  registrations          EventRegistration[]
 
   @@index([gameType, startsAt])
   @@index([status])
 }
 
 model EventRegistration {
-  id          String             @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   eventId     String
-  status      String             @default("active")
-  createdAt   DateTime           @default(now())
+  status      String    @default("active")
+  createdAt   DateTime  @default(now())
   cancelledAt DateTime?
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event       Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@index([eventId, status])
@@ -83,10 +86,10 @@ model Feedback {
 }
 
 model ContentPage {
-  id        String         @id @default(cuid())
+  id        String   @id @default(cuid())
   key       String   @unique
   title     String
   body      String
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

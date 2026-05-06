@@ -15,10 +15,13 @@ import { eventsRouter } from './modules/events/events.routes.js'
 import { feedbackRouter } from './modules/feedback/feedback.routes.js'
 import { ratingsRouter } from './modules/ratings/ratings.routes.js'
 import { usersRouter } from './modules/users/users.routes.js'
+import { uploadRouter } from './modules/upload/upload.routes.js'
+import path from 'path'
 
 export const app = express()
 
-app.use(helmet())
+// app.use(helmet())
+app.use(helmet({ crossOriginResourcePolicy: false }))
 app.use(cors({ origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN }))
 app.use(compression())
 app.use(express.json({ limit: '1mb' }))
@@ -27,7 +30,14 @@ app.use(apiRateLimiter)
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+app.use(
+  '/uploads',
+  express.static(path.join(process.cwd(), 'uploads'), {
+    etag: false,
+  }),
+)
 
+app.use('/api/upload', uploadRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/events', eventsRouter)
