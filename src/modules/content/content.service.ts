@@ -12,6 +12,12 @@ export class ContentService {
     return page
   }
 
+  async getByKey(key: ContentPageKey) {
+    const page = await this.prisma.contentPage.findUnique({ where: { key } })
+    if (!page) throw notFound('Content page not found')
+    return page
+  }
+
   async upsert(key: ContentPageKey, dto: UpsertContentDto) {
     return this.prisma.contentPage.upsert({
       where: { key },

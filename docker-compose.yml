@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ducks-gameclub-api:latest
+    container_name: ducks-gameclub-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: file:./dev.db
+    ports:
+      - "4000:4000"
+    volumes:
+      - ducks_gameclub_prisma:/app/prisma
+      - ducks_gameclub_uploads:/app/uploads
+
+volumes:
+  ducks_gameclub_prisma:
+  ducks_gameclub_uploads:
