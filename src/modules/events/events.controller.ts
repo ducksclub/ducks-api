@@ -6,7 +6,7 @@ import { EventsService } from './events.service.js'
 const service = new EventsService(prisma)
 
 export const getEvent = async (req: Request, res: Response) => {
-  res.json(await service.get({ id: req.route.id }))
+  res.json(await service.get({ id: String(req.params.id) }))
 }
 
 export const listEvents = async (req: Request, res: Response) => {

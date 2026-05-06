@@ -13,18 +13,15 @@ export class EventsService {
   constructor(private readonly prisma: PrismaClient) {}
 
   async get(params: EventIdParams) {
-    const where: Prisma.EventWhereInput = {}
-    if (params.id) where.id = params.id
-    const [event] = await this.prisma.$transaction([
-      this.prisma.event.findFirst({
-        where,
-        orderBy: { startsAt: 'asc' },
-        include: {
-          _count: { select: { registrations: { where: { status: RegistrationStatuses.active } } } },
-        },
-      }),
-      this.prisma.event.count({ where }),
-    ])
+    const event = this.prisma.event.findFirst({
+      where: {
+        id: params.id,
+      },
+      include: {
+        _count: { select: { registrations: { where: { status: RegistrationStatuses.active } } } },
+      },
+      orderBy: { createdAt: 'asc' },
+    })
     return event
   }
 
