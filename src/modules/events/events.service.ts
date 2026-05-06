@@ -1,6 +1,6 @@
-import type { Prisma, PrismaClient } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 import { badRequest, conflict, notFound } from '../../common/errors/app-error.js'
-import { EventStatuses, GameTypes, RegistrationStatuses } from '../../common/types/domain.js'
+import { EventStatuses, RegistrationStatuses } from '../../common/types/domain.js'
 import { getPagination, paginated } from '../../common/utils/pagination.js'
 import type {
   CreateEventDto,
@@ -11,36 +11,56 @@ import type {
 
 export class EventsService {
   constructor(private readonly prisma: PrismaClient) {}
-
   async get(params: EventIdParams) {
-    const event = this.prisma.event.findFirst({
-      where: {
-        id: params.id,
-      },
+    const event = await this.prisma.event.findUnique({
+      where: { id: params.id },
       include: {
-        _count: { select: { registrations: { where: { status: RegistrationStatuses.active } } } },
+        _count: {
+          select: {
+            registrations: {
+              where: { status: RegistrationStatuses.active },
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'asc' },
     })
+
+    if (!event) {
+      throw notFound('Event not found')
+    }
+
     return event
   }
 
   async list(query: EventListQuery) {
     const where: Prisma.EventWhereInput = {}
+
     if (query.gameType) where.gameType = query.gameType
     if (query.status) where.status = query.status
-    const pagination = { page: query.page, limit: query.limit }
+
+    const pagination = {
+      page: query.page,
+      limit: query.limit,
+    }
+
     const [events, total] = await this.prisma.$transaction([
       this.prisma.event.findMany({
         where,
         ...getPagination(pagination),
         orderBy: { startsAt: 'asc' },
         include: {
-          _count: { select: { registrations: { where: { status: RegistrationStatuses.active } } } },
+          _count: {
+            select: {
+              registrations: {
+                where: { status: RegistrationStatuses.active },
+              },
+            },
+          },
         },
       }),
       this.prisma.event.count({ where }),
     ])
+
     return paginated(events, total, pagination)
   }
 
@@ -62,26 +82,43 @@ export class EventsService {
   }
 
   async update(id: string, dto: UpdateEventDto) {
-    await this.ensureEvent(id)
-    const data: Prisma.EventUpdateInput = {}
-    if (dto.address !== undefined) data.address = dto.address
-    if (dto.gameType !== undefined) data.gameType = dto.gameType
-    if (dto.startsAt !== undefined) data.startsAt = dto.startsAt
-    if (dto.endsAt !== undefined) data.endsAt = dto.endsAt
-    if (dto.location !== undefined) data.location = dto.location
-    if (dto.participantLimit !== undefined) data.participantLimit = dto.participantLimit
-    if (dto.pointsForParticipation !== undefined)
-      data.pointsForParticipation = dto.pointsForParticipation
-    if (dto.status !== undefined) data.status = dto.status
-    if (dto.imageHash !== undefined) data.imageHash = dto.imageHash
-    if (dto.imageUrl !== undefined) data.imageUrl = dto.imageUrl
-    return this.prisma.event.update({ where: { id }, data })
+    const data: Prisma.EventUpdateInput = {
+      ...(dto.address !== undefined && { address: dto.address }),
+      ...(dto.gameType !== undefined && { gameType: dto.gameType }),
+      ...(dto.startsAt !== undefined && { startsAt: dto.startsAt }),
+      ...(dto.endsAt !== undefined && { endsAt: dto.endsAt }),
+      ...(dto.location !== undefined && { location: dto.location }),
+      ...(dto.participantLimit !== undefined && {
+        participantLimit: dto.participantLimit,
+      }),
+      ...(dto.pointsForParticipation !== undefined && {
+        pointsForParticipation: dto.pointsForParticipation,
+      }),
+      ...(dto.status !== undefined && { status: dto.status }),
+      ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl }),
+      ...(dto.imageHash !== undefined && { imageHash: dto.imageHash }),
+    }
+
+    try {
+      return await this.prisma.event.update({
+        where: { id },
+        data,
+      })
+    } catch {
+      throw notFound('Event not found')
+    }
   }
 
   async delete(id: string) {
-    await this.ensureEvent(id)
-    await this.prisma.event.delete({ where: { id } })
-    return { deleted: true }
+    try {
+      await this.prisma.event.delete({
+        where: { id },
+      })
+
+      return { deleted: true }
+    } catch {
+      throw notFound('Event not found')
+    }
   }
 
   async registerUser(eventId: string, userId: string) {
@@ -89,32 +126,69 @@ export class EventsService {
       const event = await tx.event.findUnique({
         where: { id: eventId },
         include: {
-          _count: { select: { registrations: { where: { status: RegistrationStatuses.active } } } },
+          _count: {
+            select: {
+              registrations: {
+                where: { status: RegistrationStatuses.active },
+              },
+            },
+          },
         },
       })
+
       if (!event) throw notFound('Event not found')
-      if (event.status !== EventStatuses.published)
+
+      if (event.status !== EventStatuses.published) {
         throw badRequest('Registration is available only for published events')
-      if (event._count.registrations >= event.participantLimit)
+      }
+
+      if (event._count.registrations >= event.participantLimit) {
         throw conflict('Participant limit reached')
+      }
 
       const existing = await tx.eventRegistration.findUnique({
-        where: { userId_eventId: { userId, eventId } },
+        where: {
+          userId_eventId: { userId, eventId },
+        },
       })
-      if (existing?.status === RegistrationStatuses.active)
-        throw conflict('User is already registered for this event')
+
+      if (existing && existing.status === RegistrationStatuses.active) {
+        throw conflict('Already registered for this event')
+      }
 
       const registration = existing
         ? await tx.eventRegistration.update({
             where: { id: existing.id },
-            data: { status: RegistrationStatuses.active, cancelledAt: null },
+            data: {
+              status: RegistrationStatuses.active,
+              cancelledAt: null,
+            },
           })
-        : await tx.eventRegistration.create({ data: { eventId, userId } })
+        : await tx.eventRegistration.create({
+            data: {
+              userId,
+              eventId,
+              status: RegistrationStatuses.active,
+            },
+          })
 
       await tx.rating.upsert({
-        where: { userId_gameType: { userId, gameType: event.gameType } },
-        create: { userId, gameType: event.gameType, points: event.pointsForParticipation },
-        update: { points: { increment: event.pointsForParticipation } },
+        where: {
+          userId_gameType: {
+            userId,
+            gameType: event.gameType,
+          },
+        },
+        create: {
+          userId,
+          gameType: event.gameType,
+          points: event.pointsForParticipation,
+        },
+        update: {
+          points: {
+            increment: event.pointsForParticipation,
+          },
+        },
       })
 
       return registration
@@ -123,30 +197,29 @@ export class EventsService {
 
   async cancelRegistration(eventId: string, userId: string) {
     const registration = await this.prisma.eventRegistration.findUnique({
-      where: { userId_eventId: { userId, eventId } },
+      where: {
+        userId_eventId: { userId, eventId },
+      },
     })
-    if (!registration || registration.status !== RegistrationStatuses.active)
+
+    if (!registration || registration.status !== RegistrationStatuses.active) {
       throw notFound('Active registration not found')
+    }
 
     return this.prisma.eventRegistration.update({
       where: { id: registration.id },
-      data: { status: RegistrationStatuses.cancelled, cancelledAt: new Date() },
+      data: {
+        status: RegistrationStatuses.cancelled,
+        cancelledAt: new Date(),
+      },
     })
   }
 
-  async addParticipant(eventId: string, userId: string) {
-    return this.registerUser(eventId, userId)
-  }
-
-  async removeParticipant(eventId: string, userId: string) {
-    return this.cancelRegistration(eventId, userId)
-  }
-
-  private async ensureEvent(id: string) {
-    const event = await this.prisma.event.findUnique({ where: { id } })
-    if (!event) throw notFound('Event not found')
-    return event
+  async getUserRegistration(userId: string, eventId: string) {
+    return this.prisma.eventRegistration.findUnique({
+      where: {
+        userId_eventId: { userId, eventId },
+      },
+    })
   }
 }
-
-export const gameTypes = [GameTypes.poker, GameTypes.darts, GameTypes.billiards] as const

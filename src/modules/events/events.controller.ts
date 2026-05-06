@@ -6,40 +6,56 @@ import { EventsService } from './events.service.js'
 const service = new EventsService(prisma)
 
 export const getEvent = async (req: Request, res: Response) => {
-  res.json(await service.get({ id: String(req.params.id) }))
+  const id = String(req.params.id)
+  const data = await service.get({ id })
+  res.json(data)
 }
 
 export const listEvents = async (req: Request, res: Response) => {
-  res.json(await service.list(req.query as never))
+  const data = await service.list(req.query as never)
+  res.json(data)
 }
 
 export const createEvent = async (req: Request, res: Response) => {
-  res.status(201).json(await service.create(req.body))
+  const data = await service.create(req.body)
+  res.status(201).json(data)
 }
 
 export const updateEvent = async (req: Request, res: Response) => {
-  res.json(await service.update(req.params.id as string, req.body))
+  const id = String(req.params.id)
+  const data = await service.update(id, req.body)
+  res.json(data)
 }
 
 export const deleteEvent = async (req: Request, res: Response) => {
-  res.json(await service.delete(req.params.id as string))
+  const id = String(req.params.id)
+  const data = await service.delete(id)
+  res.json(data)
+}
+
+export const registrationCheckEvent = async (req: Request, res: Response) => {
+  const userId = req.user?.id
+  const id = String(req.params.id)
+  if (!userId) throw unauthorized()
+
+  const data = await service.getUserRegistration(userId, id)
+  res.json(data)
 }
 
 export const registerForEvent = async (req: Request, res: Response) => {
-  const userId = req.body.userId ?? req.user?.id
+  const userId = req.user?.id
+  const id = String(req.params.id)
   if (!userId) throw unauthorized()
-  res.status(201).json(await service.registerUser(req.params.id as string, userId))
+
+  const data = await service.registerUser(id, userId)
+  res.status(201).json(data)
 }
 
 export const cancelEventRegistration = async (req: Request, res: Response) => {
-  if (!req.user) throw unauthorized()
-  res.json(await service.cancelRegistration(req.params.id as string, req.user.id))
-}
+  const userId = req.user?.id
+  const id = String(req.params.id)
+  if (!userId) throw unauthorized()
 
-export const addParticipant = async (req: Request, res: Response) => {
-  res.status(201).json(await service.addParticipant(req.params.id as string, req.body.userId))
-}
-
-export const removeParticipant = async (req: Request, res: Response) => {
-  res.json(await service.removeParticipant(req.params.id as string, req.body.userId))
+  const data = await service.cancelRegistration(id, userId)
+  res.json(data)
 }
