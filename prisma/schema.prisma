@@ -51,6 +51,7 @@ model EventRegistration {
   status      String    @default("active")
   createdAt   DateTime  @default(now())
   cancelledAt DateTime?
+  position    Int?
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 

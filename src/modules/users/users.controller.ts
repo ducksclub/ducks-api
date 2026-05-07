@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
-import { unauthorized } from '../../common/errors/app-error.js'
-import { prisma } from '../../prisma/client.js'
-import { UsersService } from './users.service.js'
+import { unauthorized } from '../../common/errors/app-error'
+import { prisma } from '../../prisma/client'
+import { UsersService } from './users.service'
 
 const service = new UsersService(prisma)
 

@@ -41,7 +41,17 @@ export const manageParticipantSchema = z.object({
   userId: z.string().min(1),
 })
 
+export const reorderParticipantsSchema = z.object({
+  participants: z.array(
+    z.object({
+      userId: z.string().min(1),
+      position: z.number().int().min(1),
+    }),
+  ),
+})
+
 export type EventIdParams = z.infer<typeof eventIdParamsSchema>
 export type EventListQuery = z.infer<typeof eventListQuerySchema>
 export type CreateEventDto = z.infer<typeof createEventSchema>
 export type UpdateEventDto = z.infer<typeof updateEventSchema>
+export type ReorderParticipantsDto = z.infer<typeof reorderParticipantsSchema>

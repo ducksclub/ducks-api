@@ -6,6 +6,7 @@ import type {
   CreateEventDto,
   EventIdParams,
   EventListQuery,
+  ReorderParticipantsDto,
   UpdateEventDto,
 } from './events.schemas.js'
 
@@ -224,24 +225,24 @@ export class EventsService {
             },
           })
 
-      await tx.rating.upsert({
-        where: {
-          userId_gameType: {
-            userId,
-            gameType: event.gameType,
-          },
-        },
-        create: {
-          userId,
-          gameType: event.gameType,
-          points: event.pointsForParticipation,
-        },
-        update: {
-          points: {
-            increment: event.pointsForParticipation,
-          },
-        },
-      })
+      // await tx.rating.upsert({
+      //   where: {
+      //     userId_gameType: {
+      //       userId,
+      //       gameType: event.gameType,
+      //     },
+      //   },
+      //   create: {
+      //     userId,
+      //     gameType: event.gameType,
+      //     points: event.pointsForParticipation,
+      //   },
+      //   update: {
+      //     points: {
+      //       increment: event.pointsForParticipation,
+      //     },
+      //   },
+      // })
 
       return registration
     })
@@ -272,6 +273,95 @@ export class EventsService {
       where: {
         userId_eventId: { userId, eventId },
       },
+    })
+  }
+
+  async listActiveNow() {
+    const now = new Date()
+
+    return this.prisma.event.findMany({
+      where: {
+        status: EventStatuses.published,
+        startsAt: { lte: now },
+        OR: [{ endsAt: null }, { endsAt: { gte: now } }],
+      },
+      orderBy: { startsAt: 'desc' },
+      include: {
+        _count: {
+          select: {
+            registrations: {
+              where: { status: RegistrationStatuses.active },
+            },
+          },
+        },
+      },
+    })
+  }
+
+  async getEventParticipants(eventId: string) {
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+    })
+
+    if (!event) throw notFound('Event not found')
+
+    const participants = await this.prisma.eventRegistration.findMany({
+      where: {
+        eventId,
+        status: RegistrationStatuses.active,
+      },
+      include: {
+        user: true,
+      },
+      orderBy: {
+        position: 'asc',
+      },
+    })
+
+    return {
+      event,
+      participants,
+    }
+  }
+
+  async reorderParticipants(eventId: string, dto: ReorderParticipantsDto) {
+    return this.prisma.$transaction(async (tx) => {
+      const event = await tx.event.findUnique({
+        where: { id: eventId },
+      })
+
+      if (!event) throw notFound('Event not found')
+
+      // обновляем каждого участника
+      await Promise.all(
+        dto.participants.map((p) =>
+          tx.eventRegistration.update({
+            where: {
+              userId_eventId: {
+                userId: p.userId,
+                eventId,
+              },
+            },
+            data: {
+              position: p.position,
+            },
+          }),
+        ),
+      )
+
+      // возвращаем обновлённый список
+      return tx.eventRegistration.findMany({
+        where: {
+          eventId,
+          status: RegistrationStatuses.active,
+        },
+        include: {
+          user: true,
+        },
+        orderBy: {
+          position: 'asc',
+        },
+      })
     })
   }
 }

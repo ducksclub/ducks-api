@@ -9,10 +9,13 @@ import {
   createEvent,
   deleteEvent,
   getEvent,
+  getEventParticipants,
+  listActiveEvents,
   listEvents,
   listMyEvents,
   registerForEvent,
   registrationCheckEvent,
+  reorderParticipants,
   updateEvent,
 } from './events.controller.js'
 
@@ -20,6 +23,7 @@ import {
   createEventSchema,
   eventIdParamsSchema,
   eventListQuerySchema,
+  reorderParticipantsSchema,
   updateEventSchema,
 } from './events.schemas.js'
 
@@ -34,6 +38,13 @@ eventsRouter.get(
   authenticate,
   validate({ query: eventListQuerySchema }),
   asyncHandler(listMyEvents),
+)
+
+eventsRouter.get(
+  '/active-now',
+  authenticate,
+  authorize(Roles.admin),
+  asyncHandler(listActiveEvents),
 )
 
 eventsRouter.get('/:id', validate({ params: eventIdParamsSchema }), asyncHandler(getEvent))
@@ -66,6 +77,21 @@ eventsRouter.delete(
 // =========================
 // ADMIN
 // =========================
+eventsRouter.get(
+  '/:id/participants',
+  authenticate,
+  authorize(Roles.admin),
+  asyncHandler(getEventParticipants),
+)
+
+eventsRouter.patch(
+  '/:id/participants/reorder',
+  authenticate,
+  authorize(Roles.admin),
+  validate({ body: reorderParticipantsSchema }),
+  asyncHandler(reorderParticipants),
+)
+
 eventsRouter.post(
   '/',
   authenticate,

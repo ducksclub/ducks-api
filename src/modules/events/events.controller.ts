@@ -68,3 +68,24 @@ export const cancelEventRegistration = async (req: Request, res: Response) => {
   const data = await service.cancelRegistration(id, userId)
   res.json(data)
 }
+
+export const listActiveEvents = async (req: Request, res: Response) => {
+  const data = await service.listActiveNow()
+  res.json({ data })
+}
+
+export const getEventParticipants = async (req: Request, res: Response) => {
+  const id = String(req.params.id)
+
+  const data = await service.getEventParticipants(id)
+
+  res.json(data)
+}
+
+export const reorderParticipants = async (req: Request, res: Response) => {
+  const id = String(req.params.id)
+
+  const data = await service.reorderParticipants(id, req.body)
+
+  res.json({ data })
+}

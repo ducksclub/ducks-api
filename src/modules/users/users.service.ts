@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
-import { notFound } from '../../common/errors/app-error.js'
+import { notFound } from '../../common/errors/app-error'
 
 export class UsersService {
   constructor(private readonly prisma: PrismaClient) {}
