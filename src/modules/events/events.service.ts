@@ -64,6 +64,58 @@ export class EventsService {
     return paginated(events, total, pagination)
   }
 
+  async listMy(query: EventListQuery, userId: string) {
+    const where: Prisma.EventWhereInput = {
+      ...(query.gameType && {
+        gameType: query.gameType,
+      }),
+
+      ...(query.status && {
+        status: query.status,
+      }),
+
+      registrations: {
+        some: {
+          userId,
+          status: RegistrationStatuses.active,
+        },
+      },
+    }
+
+    const pagination = {
+      page: query.page,
+      limit: query.limit,
+    }
+
+    const [events, total] = await this.prisma.$transaction([
+      this.prisma.event.findMany({
+        where,
+
+        ...getPagination(pagination),
+
+        orderBy: {
+          startsAt: 'asc',
+        },
+
+        include: {
+          _count: {
+            select: {
+              registrations: {
+                where: {
+                  status: RegistrationStatuses.active,
+                },
+              },
+            },
+          },
+        },
+      }),
+
+      this.prisma.event.count({ where }),
+    ])
+
+    return paginated(events, total, pagination)
+  }
+
   async create(dto: CreateEventDto) {
     return this.prisma.event.create({
       data: {

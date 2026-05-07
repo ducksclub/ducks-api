@@ -10,6 +10,7 @@ import {
   deleteEvent,
   getEvent,
   listEvents,
+  listMyEvents,
   registerForEvent,
   registrationCheckEvent,
   updateEvent,
@@ -28,12 +29,19 @@ export const eventsRouter = Router()
 // PUBLIC
 // =========================
 eventsRouter.get('/', validate({ query: eventListQuerySchema }), asyncHandler(listEvents))
+eventsRouter.get(
+  '/me',
+  authenticate,
+  validate({ query: eventListQuerySchema }),
+  asyncHandler(listMyEvents),
+)
 
 eventsRouter.get('/:id', validate({ params: eventIdParamsSchema }), asyncHandler(getEvent))
 
 // =========================
 // AUTH USER ACTIONS
 // =========================
+
 eventsRouter.get(
   '/:id/registration',
   authenticate,

@@ -16,6 +16,15 @@ export const listEvents = async (req: Request, res: Response) => {
   res.json(data)
 }
 
+export const listMyEvents = async (req: Request, res: Response) => {
+  const userId = req.user?.id
+  if (!userId) throw unauthorized()
+
+  const data = await service.listMy(req.query as never, userId)
+
+  res.json(data)
+}
+
 export const createEvent = async (req: Request, res: Response) => {
   const data = await service.create(req.body)
   res.status(201).json(data)
