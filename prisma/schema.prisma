@@ -76,8 +76,6 @@ model Rating {
 model Feedback {
   id        String   @id @default(cuid())
   userId    String?
-  name      String?
-  email     String?
   message   String
   createdAt DateTime @default(now())
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)

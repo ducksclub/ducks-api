@@ -11,3 +11,8 @@ export const createFeedback = async (req: Request, res: Response) => {
 export const listFeedback = async (req: Request, res: Response) => {
   res.json(await service.list(req.query as never))
 }
+
+export const deleteFeedback = async (req: Request, res: Response) => {
+  const data = await service.delete(String(req.params.id))
+  res.json(data)
+}
