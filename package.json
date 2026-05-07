@@ -15,7 +15,7 @@
     "prisma:seed": "tsx prisma/prod-seed.ts"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/prod-seed.ts"
   },
   "engines": {
     "node": "22.x"
