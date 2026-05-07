@@ -1,0 +1,15 @@
+export const POSITION_POINTS: Array<{ from: number; to?: number; points: number }> = [
+  { from: 1, to: 1, points: 300 },
+  { from: 2, to: 2, points: 220 },
+  { from: 3, to: 3, points: 170 },
+  { from: 4, to: 4, points: 130 },
+  { from: 5, to: 5, points: 100 },
+  { from: 6, to: 6, points: 85 },
+  { from: 7, to: 7, points: 70 },
+  { from: 8, to: 8, points: 60 },
+  { from: 9, to: 9, points: 50 },
+  { from: 10, to: 10, points: 40 },
+  { from: 11, to: 15, points: 30 },
+  { from: 16, to: 25, points: 20 },
+  { from: 26, to: Infinity, points: 10 },
+]

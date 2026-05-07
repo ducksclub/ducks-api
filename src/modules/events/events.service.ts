@@ -277,13 +277,13 @@ export class EventsService {
   }
 
   async listActiveNow() {
-    const now = new Date()
+    // const now = new Date()
 
     return this.prisma.event.findMany({
       where: {
         status: EventStatuses.published,
-        startsAt: { lte: now },
-        OR: [{ endsAt: null }, { endsAt: { gte: now } }],
+        // startsAt: { lte: now },
+        // OR: [{ endsAt: null }, { endsAt: { gte: now } }],
       },
       orderBy: { startsAt: 'desc' },
       include: {
@@ -324,6 +324,90 @@ export class EventsService {
     }
   }
 
+  // async reorderParticipants(eventId: string, dto: ReorderParticipantsDto) {
+  //   return this.prisma.$transaction(async (tx) => {
+  //     const event = await tx.event.findUnique({
+  //       where: { id: eventId },
+  //     })
+
+  //     if (!event) throw notFound('Event not found')
+
+  //     // обновляем каждого участника
+  //     await Promise.all(
+  //       dto.participants.map((p) =>
+  //         tx.eventRegistration.update({
+  //           where: {
+  //             userId_eventId: {
+  //               userId: p.userId,
+  //               eventId,
+  //             },
+  //           },
+  //           data: {
+  //             position: p.position,
+  //           },
+  //         }),
+  //       ),
+  //     )
+
+  //     // возвращаем обновлённый список
+  //     return tx.eventRegistration.findMany({
+  //       where: {
+  //         eventId,
+  //         status: RegistrationStatuses.active,
+  //       },
+  //       include: {
+  //         user: true,
+  //       },
+  //       orderBy: {
+  //         position: 'asc',
+  //       },
+  //     })
+  //   })
+  // }
+
+  // =========================
+  // 🎯 POSITION POINTS TABLE
+  // =========================
+  private getBasePoints(position: number): number {
+    if (position === 1) return 300
+    if (position === 2) return 220
+    if (position === 3) return 170
+    if (position === 4) return 130
+    if (position === 5) return 100
+    if (position === 6) return 85
+    if (position === 7) return 70
+    if (position === 8) return 60
+    if (position === 9) return 50
+    if (position === 10) return 40
+    if (position >= 11 && position <= 15) return 30
+    if (position >= 16 && position <= 25) return 20
+
+    return 10 // 26+
+  }
+
+  // =========================
+  // 📈 MULTIPLIER TABLE
+  // =========================
+  private getMultiplier(playersCount: number): number {
+    if (playersCount <= 20) return 1.0
+    if (playersCount <= 35) return 1.2
+    if (playersCount <= 50) return 1.5
+    if (playersCount <= 65) return 1.8
+    if (playersCount <= 80) return 2.0
+
+    return 2.0
+  }
+
+  // =========================
+  // 🧮 FINAL POINTS CALC
+  // =========================
+  private calculatePoints(position: number, playersCount: number): number {
+    const base = this.getBasePoints(position)
+    const multiplier = this.getMultiplier(playersCount)
+
+    return Math.round(base * multiplier)
+  }
+
   async reorderParticipants(eventId: string, dto: ReorderParticipantsDto) {
     return this.prisma.$transaction(async (tx) => {
       const event = await tx.event.findUnique({
@@ -332,7 +416,11 @@ export class EventsService {
 
       if (!event) throw notFound('Event not found')
 
-      // обновляем каждого участника
+      if (event.status === EventStatuses.completed) {
+        throw conflict('Event already completed')
+      }
+
+      // update ONLY positions
       await Promise.all(
         dto.participants.map((p) =>
           tx.eventRegistration.update({
@@ -349,19 +437,70 @@ export class EventsService {
         ),
       )
 
-      // возвращаем обновлённый список
       return tx.eventRegistration.findMany({
+        where: { eventId },
+        include: { user: true },
+        orderBy: { position: 'asc' },
+      })
+    })
+  }
+
+  // =========================
+  // 🏁 FINALIZE EVENT
+  // =========================
+  async finalizeEvent(eventId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const event = await tx.event.findUnique({
+        where: { id: eventId },
+      })
+
+      if (!event) throw notFound('Event not found')
+
+      if (event.status === EventStatuses.completed) {
+        throw conflict('Event already completed')
+      }
+
+      const registrations = await tx.eventRegistration.findMany({
         where: {
           eventId,
           status: RegistrationStatuses.active,
         },
-        include: {
-          user: true,
-        },
-        orderBy: {
-          position: 'asc',
+        orderBy: { position: 'asc' },
+      })
+
+      const playersCount = registrations.length
+
+      for (const reg of registrations) {
+        const points = this.calculatePoints(reg.position ?? playersCount, playersCount)
+
+        await tx.rating.upsert({
+          where: {
+            userId_gameType: {
+              userId: reg.userId,
+              gameType: event.gameType,
+            },
+          },
+          create: {
+            userId: reg.userId,
+            gameType: event.gameType,
+            points,
+          },
+          update: {
+            points: {
+              increment: points, // 👈 лучше accumulate, а не overwrite
+            },
+          },
+        })
+      }
+
+      await tx.event.update({
+        where: { id: eventId },
+        data: {
+          status: EventStatuses.completed,
         },
       })
+
+      return { success: true }
     })
   }
 }

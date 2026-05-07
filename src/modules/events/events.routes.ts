@@ -8,6 +8,7 @@ import {
   cancelEventRegistration,
   createEvent,
   deleteEvent,
+  finalizeEvent,
   getEvent,
   getEventParticipants,
   listActiveEvents,
@@ -77,6 +78,13 @@ eventsRouter.delete(
 // =========================
 // ADMIN
 // =========================
+eventsRouter.post(
+  '/:id/finalize',
+  authenticate,
+  authorize(Roles.admin),
+  asyncHandler(finalizeEvent),
+)
+
 eventsRouter.get(
   '/:id/participants',
   authenticate,

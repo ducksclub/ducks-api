@@ -89,3 +89,11 @@ export const reorderParticipants = async (req: Request, res: Response) => {
 
   res.json({ data })
 }
+
+export const finalizeEvent = async (req: Request, res: Response) => {
+  const id = String(req.params.id)
+
+  const data = await service.finalizeEvent(id)
+
+  res.json(data)
+}
