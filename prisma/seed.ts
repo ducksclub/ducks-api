@@ -79,6 +79,7 @@ async function main() {
       body: 'Respect other players, confirm event participation in advance, and follow host instructions.',
     },
   })
+
   await prisma.contentPage.upsert({
     where: { key: ContentPageKeys.about },
     update: {},
@@ -88,6 +89,7 @@ async function main() {
       body: "DUCK'S GameClub hosts poker, darts, and billiards events for club members.",
     },
   })
+
   await prisma.contentPage.upsert({
     where: { key: ContentPageKeys.faq },
     update: {},

@@ -3,7 +3,7 @@ ducks.db
 node_modules
 dist
 .env
-# *.db
+*.db
 *.db-journal
 coverage
 .DS_Store
