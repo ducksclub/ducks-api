@@ -43,16 +43,6 @@ export class BotEventsService {
           telegram_id: String(telegramUserId),
         },
       })
-      console.log({
-        telegramUserId,
-        type: typeof telegramUserId,
-      })
-      const allUsers = await tx.user.findMany({
-        select: {
-          telegram_id: true,
-        },
-      })
-      console.log(allUsers)
 
       if (!user) {
         throw notFound('Telegram user not found')
@@ -146,31 +136,52 @@ export class BotEventsService {
    * CANCEL REGISTRATION
    * =====================================
    */
-
   async cancelRegistration(eventId: string, telegramUserId: string) {
-    const user = await this.getTelegramUser(telegramUserId)
-
-    const registration = await this.prisma.eventRegistration.findUnique({
-      where: {
-        userId_eventId: {
-          userId: user.id,
-          eventId,
+    return this.prisma.$transaction(async (tx) => {
+      /**
+       * find telegram user
+       */
+      const user = await tx.user.findUnique({
+        where: {
+          telegram_id: String(telegramUserId),
         },
-      },
-    })
+      })
 
-    if (!registration || registration.status !== RegistrationStatuses.active) {
-      throw notFound('Active registration not found')
-    }
+      if (!user) {
+        throw notFound('Telegram user not found')
+      }
 
-    return this.prisma.eventRegistration.update({
-      where: {
-        id: registration.id,
-      },
-      data: {
-        status: RegistrationStatuses.cancelled,
-        cancelledAt: new Date(),
-      },
+      /**
+       * find registration
+       */
+      const registration = await tx.eventRegistration.findUnique({
+        where: {
+          userId_eventId: {
+            userId: user.id,
+            eventId,
+          },
+        },
+      })
+
+      /**
+       * validation
+       */
+      if (!registration || registration.status !== RegistrationStatuses.active) {
+        throw notFound('Active registration not found')
+      }
+
+      /**
+       * cancel
+       */
+      return tx.eventRegistration.update({
+        where: {
+          id: registration.id,
+        },
+        data: {
+          status: RegistrationStatuses.cancelled,
+          cancelledAt: new Date(),
+        },
+      })
     })
   }
 

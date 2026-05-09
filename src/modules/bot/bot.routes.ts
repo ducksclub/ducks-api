@@ -7,7 +7,7 @@ import { EventsService } from '../events/events.service.js'
 import { feedbackCreateSchema } from '../feedback/feedback.schemas.js'
 import { FeedbackService } from '../feedback/feedback.service.js'
 import { botRegisterSchema } from './bot.schemas.js'
-import { registerForEvent } from './bot.controller.js'
+import { cancelEventRegistration, registerForEvent } from './bot.controller.js'
 
 export const botRouter = Router()
 
@@ -45,9 +45,8 @@ botRouter.post(
   asyncHandler(registerForEvent),
 )
 
-// eventsRouter.delete(
-//   '/:id/register',
-//   authenticate,
-//   validate({ params: eventIdParamsSchema }),
-//   asyncHandler(cancelEventRegistration),
-// )
+botRouter.delete(
+  '/events/:id/register',
+  validate({ body: botRegisterSchema }),
+  asyncHandler(cancelEventRegistration),
+)
