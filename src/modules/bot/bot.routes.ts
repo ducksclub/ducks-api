@@ -6,8 +6,12 @@ import { prisma } from '../../prisma/client.js'
 import { EventsService } from '../events/events.service.js'
 import { feedbackCreateSchema } from '../feedback/feedback.schemas.js'
 import { FeedbackService } from '../feedback/feedback.service.js'
-import { botRegisterSchema } from './bot.schemas.js'
-import { cancelEventRegistration, registerForEvent } from './bot.controller.js'
+import { botEventIdParamsSchema, botRegisterSchema } from './bot.schemas.js'
+import {
+  cancelEventRegistration,
+  registerForEvent,
+  registrationCheckEvent,
+} from './bot.controller.js'
 
 export const botRouter = Router()
 
@@ -32,12 +36,11 @@ botRouter.post(
   }),
 )
 
-// eventsRouter.get(
-//   '/:id/registration',
-//   authenticate,
-//   validate({ params: eventIdParamsSchema }),
-//   asyncHandler(registrationCheckEvent),
-// )
+botRouter.get(
+  '/events/:id/registration',
+  validate({ query: botEventIdParamsSchema }),
+  asyncHandler(registrationCheckEvent),
+)
 
 botRouter.post(
   '/events/:id/register',

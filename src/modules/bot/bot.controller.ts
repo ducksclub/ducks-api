@@ -33,3 +33,14 @@ export const cancelEventRegistration = async (req: Request, res: Response) => {
   const data = await service.cancelRegistration(eventId, telegramUserId)
   res.json(data)
 }
+
+export const registrationCheckEvent = async (req: Request, res: Response) => {
+  const eventId = req.params.id
+  const telegramUserId = req.query.telegramUserId
+
+  if (!eventId) throw badRequest('eventId is required')
+  if (!telegramUserId) throw badRequest('telegramUserId is required')
+
+  const data = await service.getUserRegistration(String(telegramUserId), String(eventId))
+  res.json(data)
+}

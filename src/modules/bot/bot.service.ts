@@ -190,17 +190,26 @@ export class BotEventsService {
    * GET USER REGISTRATION
    * =====================================
    */
-
   async getUserRegistration(telegramUserId: string, eventId: string) {
-    const user = await this.getTelegramUser(telegramUserId)
-
-    return this.prisma.eventRegistration.findUnique({
-      where: {
-        userId_eventId: {
-          userId: user.id,
-          eventId,
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: {
+          telegram_id: String(telegramUserId),
         },
-      },
+      })
+
+      if (!user) {
+        throw notFound('Telegram user not found')
+      }
+
+      return tx.eventRegistration.findUnique({
+        where: {
+          userId_eventId: {
+            userId: user.id,
+            eventId,
+          },
+        },
+      })
     })
   }
 
@@ -210,39 +219,39 @@ export class BotEventsService {
    * =====================================
    */
 
-  async listActiveNow(game?: string) {
-    return this.prisma.event.findMany({
-      where: {
-        status: EventStatuses.published,
+  // async listActiveNow(game?: string) {
+  //   return this.prisma.event.findMany({
+  //     where: {
+  //       status: EventStatuses.published,
 
-        ...(game
-          ? {
-              game: {
-                slug: game,
-              },
-            }
-          : {}),
-      },
+  //       ...(game
+  //         ? {
+  //             game: {
+  //               slug: game,
+  //             },
+  //           }
+  //         : {}),
+  //     },
 
-      orderBy: {
-        startsAt: 'desc',
-      },
+  //     orderBy: {
+  //       startsAt: 'desc',
+  //     },
 
-      include: {
-        game: true,
+  //     include: {
+  //       game: true,
 
-        _count: {
-          select: {
-            registrations: {
-              where: {
-                status: RegistrationStatuses.active,
-              },
-            },
-          },
-        },
-      },
-    })
-  }
+  //       _count: {
+  //         select: {
+  //           registrations: {
+  //             where: {
+  //               status: RegistrationStatuses.active,
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+  //   })
+  // }
 
   /**
    * =====================================
@@ -250,48 +259,48 @@ export class BotEventsService {
    * =====================================
    */
 
-  async getEventParticipants(eventId: string) {
-    const event = await this.prisma.event.findUnique({
-      where: {
-        id: eventId,
-      },
+  // async getEventParticipants(eventId: string) {
+  //   const event = await this.prisma.event.findUnique({
+  //     where: {
+  //       id: eventId,
+  //     },
 
-      include: {
-        registrations: true,
-      },
-    })
+  //     include: {
+  //       registrations: true,
+  //     },
+  //   })
 
-    if (!event) {
-      throw notFound('Event not found')
-    }
+  //   if (!event) {
+  //     throw notFound('Event not found')
+  //   }
 
-    const participants = await this.prisma.eventRegistration.findMany({
-      where: {
-        eventId,
+  //   const participants = await this.prisma.eventRegistration.findMany({
+  //     where: {
+  //       eventId,
 
-        status: RegistrationStatuses.active,
-      },
+  //       status: RegistrationStatuses.active,
+  //     },
 
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            telegram_id: true,
-            avatarUrl: true,
-          },
-        },
-      },
+  //     include: {
+  //       user: {
+  //         select: {
+  //           id: true,
+  //           name: true,
+  //           telegram_id: true,
+  //           avatarUrl: true,
+  //         },
+  //       },
+  //     },
 
-      orderBy: {
-        position: 'asc',
-      },
-    })
+  //     orderBy: {
+  //       position: 'asc',
+  //     },
+  //   })
 
-    return {
-      event,
-      participants,
-      total: participants.length,
-    }
-  }
+  //   return {
+  //     event,
+  //     participants,
+  //     total: participants.length,
+  //   }
+  // }
 }
