@@ -44,3 +44,18 @@ export const registrationCheckEvent = async (req: Request, res: Response) => {
   const data = await service.getUserRegistration(String(telegramUserId), String(eventId))
   res.json(data)
 }
+
+export const createFeedback = async (req: Request, res: Response) => {
+  const telegramUserId = req.body.telegramUserId
+  const message = req.body.message
+
+  if (!message) throw badRequest('message is required')
+  if (!telegramUserId) throw badRequest('telegramUserId is required')
+
+  const feedback = await service.createFeedback(message, String(telegramUserId))
+
+  return res.status(201).json({
+    success: true,
+    data: feedback,
+  })
+}

@@ -4,19 +4,20 @@ import { asyncHandler } from '../../common/utils/async-handler.js'
 import { prisma } from '../../prisma/client.js'
 // import { getRules } from '../content/content.controller.js'
 import { EventsService } from '../events/events.service.js'
-import { feedbackCreateSchema } from '../feedback/feedback.schemas.js'
-import { FeedbackService } from '../feedback/feedback.service.js'
-import { botEventIdParamsSchema, botRegisterSchema } from './bot.schemas.js'
+import {
+  botEventIdParamsSchema,
+  botFeedbackCreateSchema,
+  botRegisterSchema,
+} from './bot.schemas.js'
 import {
   cancelEventRegistration,
+  createFeedback,
   registerForEvent,
   registrationCheckEvent,
 } from './bot.controller.js'
 
 export const botRouter = Router()
-
 const eventsService = new EventsService(prisma)
-const feedbackService = new FeedbackService(prisma)
 
 botRouter.post(
   '/register',
@@ -30,10 +31,8 @@ botRouter.post(
 
 botRouter.post(
   '/feedback',
-  validate({ body: feedbackCreateSchema }),
-  asyncHandler(async (req, res) => {
-    res.status(201).json(await feedbackService.create(req.body))
-  }),
+  validate({ body: botFeedbackCreateSchema }),
+  asyncHandler(createFeedback),
 )
 
 botRouter.get(

@@ -303,4 +303,15 @@ export class BotEventsService {
   //     total: participants.length,
   //   }
   // }
+
+  async createFeedback(message: string, telegramUserId: string) {
+    const user = await this.getTelegramUser(telegramUserId)
+
+    return this.prisma.feedback.create({
+      data: {
+        message,
+        ...(user.id ? { user: { connect: { id: user.id } } } : {}),
+      },
+    })
+  }
 }
