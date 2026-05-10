@@ -14,6 +14,7 @@ export class UsersService {
       where: { id: userId },
       select: {
         id: true,
+        telegram_id: true,
         email: true,
         name: true,
         role: true,

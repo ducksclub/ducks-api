@@ -3,7 +3,8 @@ import { conflict, unauthorized } from '../../common/errors/app-error.js'
 import { Roles, type Role } from '../../common/types/domain.js'
 import { hashPassword, verifyPassword } from '../../common/utils/password.js'
 import { signAccessToken } from '../../common/utils/jwt.js'
-import type { LoginDto, RegisterDto } from './auth.schemas.js'
+import type { LoginDto, RegisterDto, TelegramUserDto } from './auth.schemas.js'
+import { generateToken } from '../../common/utils/telegram-auth.js'
 
 const publicUserSelect = {
   id: true,
@@ -17,12 +18,13 @@ const publicUserSelect = {
 export class AuthService {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto, telegramUser?: TelegramUserDto) {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } })
     if (existing) throw conflict('Email is already registered')
 
     const user = await this.prisma.user.create({
       data: {
+        telegram_id: String(telegramUser?.id) ?? null,
         email: dto.email,
         name: dto.name ?? null,
         passwordHash: await hashPassword(dto.password),
@@ -55,6 +57,40 @@ export class AuthService {
     return {
       user: publicUser,
       token: signAccessToken({ id: user.id, email: user.email, role: user.role as Role }),
+    }
+  }
+
+  async telegramLogin(telegramUser: TelegramUserDto) {
+    const telegramId = String(telegramUser.id)
+
+    let user = await this.prisma.user.findUnique({
+      where: {
+        telegram_id: telegramId,
+      },
+    })
+
+    /**
+     * привязка телеграм аккаунта
+     */
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          telegram_id: telegramId,
+          name: telegramUser.first_name,
+          email: `tg_${telegramId}@telegram.local`,
+          passwordHash: await hashPassword('telegram-password'),
+        },
+      })
+    }
+
+    const token = generateToken({
+      id: user.id,
+      role: user.role,
+    })
+
+    return {
+      token,
+      user,
     }
   }
 }
