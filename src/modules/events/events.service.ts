@@ -503,4 +503,29 @@ export class EventsService {
       return { success: true }
     })
   }
+
+  async getReminders(type: '1h' | '10m') {
+    const now = new Date()
+
+    const offset = type === '1h' ? 60 * 60 * 1000 : 10 * 60 * 1000
+
+    const target = new Date(now.getTime() + offset)
+
+    return this.prisma.event.findMany({
+      where: {
+        status: 'published',
+        ...(type === '1h' ? { reminderSent1h: false } : { reminderSent10m: false }),
+        startsAt: {
+          gte: new Date(target.getTime() - 60 * 1000),
+          lte: new Date(target.getTime() + 60 * 1000),
+        },
+      },
+      include: {
+        registrations: {
+          where: { status: 'active' },
+          include: { user: true },
+        },
+      },
+    })
+  }
 }

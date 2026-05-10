@@ -97,3 +97,28 @@ export const finalizeEvent = async (req: Request, res: Response) => {
 
   res.json(data)
 }
+
+export const getReminders = async (req: Request, res: Response) => {
+  const type = req.query.type as '1h' | '10m'
+
+  if (!type) {
+    return res.status(400).json({
+      error: 'type is required (1h | 10m)',
+    })
+  }
+
+  const events = await service.getReminders(type)
+
+  res.json(
+    events.map((event) => ({
+      id: event.id,
+      address: event.address,
+      gameType: event.gameType,
+      startsAt: event.startsAt,
+      reminderType: type, // 🔥 полезно для bot логики
+      participants: event.registrations.map((r) => ({
+        telegram_id: r.user.telegram_id,
+      })),
+    })),
+  )
+}

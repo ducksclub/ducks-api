@@ -34,6 +34,8 @@ model Event {
   startsAt               DateTime
   endsAt                 DateTime?
   location               String?
+  reminderSent1h         Boolean             @default(false)
+  reminderSent10m        Boolean             @default(false)
   participantLimit       Int
   pointsForParticipation Int                 @default(10)
   status                 String              @default("published")
