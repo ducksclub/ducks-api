@@ -9,6 +9,8 @@ export const GameTypes = {
   poker: 'poker',
   darts: 'darts',
   billiards: 'billiards',
+  quiz: 'quiz',
+  mafia: 'mafia',
 } as const
 
 export type GameType = (typeof GameTypes)[keyof typeof GameTypes]

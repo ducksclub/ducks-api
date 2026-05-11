@@ -3,9 +3,7 @@ import cors from 'cors'
 import express from 'express'
 import helmet from 'helmet'
 import morgan from 'morgan'
-import swaggerUi from 'swagger-ui-express'
 import { env } from './config/env.js'
-import { swaggerSpec } from './config/swagger.js'
 import { errorHandler } from './common/middleware/error-handler.js'
 import { apiRateLimiter } from './common/middleware/rate-limit.js'
 import { authRouter } from './modules/auth/auth.routes.js'
@@ -29,7 +27,6 @@ app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 app.use(apiRateLimiter)
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }))
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 app.use(
   '/uploads',
   express.static(path.join(process.cwd(), 'uploads'), {
