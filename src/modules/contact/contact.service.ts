@@ -1,13 +1,10 @@
-import nodemailer from 'nodemailer'
 import { MailtrapTransport } from 'mailtrap'
 import { env } from '../../config/env'
 
 export class ContactService {
-  private transport = nodemailer.createTransport(
-    MailtrapTransport({
-      token: env.MAILTRAP_TOKEN,
-    }),
-  )
+  private transport = new MailtrapTransport({
+    token: env.MAILTRAP_TOKEN,
+  })
 
   async sendContactMail(data: { name: string; phone: string; city: string }) {
     await this.transport.sendMail({

@@ -17,9 +17,6 @@
   "prisma": {
     "seed": "tsx prisma/prod-seed.ts"
   },
-  "engines": {
-    "node": "22.x"
-  },
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "bcrypt": "^5.1.1",
@@ -33,7 +30,6 @@
     "mailtrap": "^4.5.1",
     "morgan": "^1.10.0",
     "multer": "^2.1.1",
-    "nodemailer": "^8.0.7",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -45,7 +41,6 @@
     "@types/morgan": "^1.9.9",
     "@types/multer": "^2.1.0",
     "@types/node": "^22.10.2",
-    "@types/nodemailer": "^8.0.0",
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
@@ -55,5 +50,8 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
+  },
+  "volta": {
+    "node": "22.x"
   }
 }
