@@ -14,6 +14,7 @@ import { feedbackRouter } from './modules/feedback/feedback.routes.js'
 import { ratingsRouter } from './modules/ratings/ratings.routes.js'
 import { usersRouter } from './modules/users/users.routes.js'
 import { uploadRouter } from './modules/upload/upload.routes.js'
+import { contactRouter } from './modules/contact/contact.routes.js'
 import path from 'path'
 
 export const app = express()
@@ -35,6 +36,7 @@ app.use(
 )
 
 app.use('/api/upload', uploadRouter)
+app.use('/api/contact', contactRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/events', eventsRouter)
