@@ -52,11 +52,11 @@ async function main() {
    */
   const event = await prisma.event.create({
     data: {
-      city: 'Karaganda',
+      city: 'Astana',
       address: 'Arena Duck Club',
       features: '5v5, casual, friendly',
       gameRules: 'No toxicity, fair play',
-      gameType: 'cs2',
+      gameType: 'poker',
       startsAt: new Date(Date.now() + 86400000), // +1 day
       endsAt: new Date(Date.now() + 90000000),
       participantLimit: 10,
