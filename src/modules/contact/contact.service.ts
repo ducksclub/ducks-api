@@ -1,18 +1,18 @@
-import { MailtrapTransport } from 'mailtrap'
+import { MailtrapClient } from 'mailtrap'
 import { env } from '../../config/env'
 
 export class ContactService {
-  private transport = new MailtrapTransport({
+  private transport = new MailtrapClient({
     token: env.MAILTRAP_TOKEN,
   })
 
   async sendContactMail(data: { name: string; phone: string; city: string }) {
-    await this.transport.sendMail({
+    await this.transport.send({
       from: {
-        address: 'hello@demomailtrap.co',
+        email: 'hello@demomailtrap.co',
         name: 'DUCKS GameClub',
       },
-      to: [env.ADMIN_EMAIL],
+      to: [{ email: env.ADMIN_EMAIL }],
       subject: 'Новая заявка с сайта DUCKS',
       html: `
         <div style="font-family: sans-serif;">
