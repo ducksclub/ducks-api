@@ -120,11 +120,13 @@ export class EventsService {
   async create(dto: CreateEventDto) {
     return this.prisma.event.create({
       data: {
+        city: dto.city,
+        features: dto.features,
+        gameRules: dto.gameRules,
         address: dto.address ?? null,
         gameType: dto.gameType,
         startsAt: dto.startsAt,
         endsAt: dto.endsAt ?? null,
-        location: dto.location ?? null,
         participantLimit: dto.participantLimit,
         pointsForParticipation: dto.pointsForParticipation,
         status: dto.status,

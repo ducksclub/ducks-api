@@ -10,7 +10,11 @@ export const eventListQuerySchema = paginationSchema.extend({
 })
 
 const eventBaseSchema = z.object({
+  city: z.string().max(100),
   address: z.string().max(200),
+  features: z.string().max(255),
+  gameRules: z.string().max(255),
+  
   gameType: z.enum(enumValues(GameTypes)),
   startsAt: z.coerce.date(),
   endsAt: z.coerce.date().optional(),

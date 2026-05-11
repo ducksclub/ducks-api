@@ -5,39 +5,127 @@ import { z } from 'zod'
 
 dotenv.config()
 
+const prisma = new PrismaClient()
+
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(4000),
-  DATABASE_URL: z.string().min(1),
-  JWT_SECRET: z.string().min(24, 'JWT_SECRET must be at least 24 characters'),
-  JWT_EXPIRES_IN: z.string().default('7d'),
-  BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
-  CORS_ORIGIN: z.string().default('*'),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900_000),
-  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
+  BCRYPT_ROUNDS: z.coerce.number().default(12),
 })
 
 const env = envSchema.parse(process.env)
-const prisma = new PrismaClient()
+
 const hashPassword = (password: string) => bcrypt.hash(password, env.BCRYPT_ROUNDS)
 
 async function main() {
-  await prisma.user.upsert({
+  console.log('🌱 Seeding database...')
+
+  /**
+   * USERS
+   */
+  const admin = await prisma.user.upsert({
     where: { email: 'admin@ducks.com' },
     update: {},
     create: {
       email: 'admin@ducks.com',
       name: 'Club Admin',
       role: 'admin',
-      passwordHash: await hashPassword('Admin12345!'),
       username: 'admin',
+      phone: '+77777777777',
+      passwordHash: await hashPassword('Admin12345!'),
     },
   })
+
+  const user = await prisma.user.upsert({
+    where: { email: 'user@ducks.com' },
+    update: {},
+    create: {
+      email: 'user@ducks.com',
+      name: 'Test User',
+      role: 'user',
+      username: 'testuser',
+      phone: '+77770000000',
+      passwordHash: await hashPassword('User12345!'),
+    },
+  })
+
+  /**
+   * EVENTS
+   */
+  const event = await prisma.event.create({
+    data: {
+      city: 'Karaganda',
+      address: 'Arena Duck Club',
+      features: '5v5, casual, friendly',
+      gameRules: 'No toxicity, fair play',
+      gameType: 'cs2',
+      startsAt: new Date(Date.now() + 86400000), // +1 day
+      endsAt: new Date(Date.now() + 90000000),
+      participantLimit: 10,
+      pointsForParticipation: 10,
+      status: 'published',
+      imageUrl: '',
+      imageHash: '',
+    },
+  })
+
+  /**
+   * REGISTRATION
+   */
+  await prisma.eventRegistration.create({
+    data: {
+      userId: user.id,
+      eventId: event.id,
+      status: 'active',
+      position: 1,
+    },
+  })
+
+  /**
+   * RATINGS
+   */
+  await prisma.rating.upsert({
+    where: {
+      userId_gameType: {
+        userId: user.id,
+        gameType: 'cs2',
+      },
+    },
+    update: {},
+    create: {
+      userId: user.id,
+      gameType: 'cs2',
+      points: 1200,
+    },
+  })
+
+  /**
+   * FEEDBACK
+   */
+  await prisma.feedback.create({
+    data: {
+      userId: user.id,
+      message: 'Очень классный клуб, всё нравится 🔥',
+    },
+  })
+
+  /**
+   * CONTENT PAGE
+   */
+  await prisma.contentPage.upsert({
+    where: { key: 'rules' },
+    update: {},
+    create: {
+      key: 'rules',
+      title: 'Правила клуба',
+      body: '1. Уважай игроков\n2. Без токсичности\n3. Играем честно',
+    },
+  })
+
+  console.log('✅ Seeding completed')
 }
 
 main()
-  .catch((error) => {
-    console.error(error)
+  .catch((e) => {
+    console.error('❌ Seed error:', e)
     process.exit(1)
   })
   .finally(async () => {
