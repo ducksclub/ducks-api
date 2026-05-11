@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client'
 import { notFound } from '../../common/errors/app-error'
+import { UpdateProfileDto } from './users.schemas'
 
 export type CreateUserDto = {
   telegram_id: string
@@ -11,6 +12,38 @@ export class UsersService {
 
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        avatarUrl: true,
+        telegram_id: true,
+        email: true,
+        name: true,
+        role: true,
+        phone: true,
+        username: true,
+        createdAt: true,
+        updatedAt: true,
+        ratings: { select: { gameType: true, points: true } },
+      },
+    })
+    if (!user) throw notFound('User not found')
+    return user
+  }
+
+  async updateProfile(dto: UpdateProfileDto, userId: string) {
+    const data = Object.fromEntries(
+      Object.entries({
+        name: dto.name,
+        phone: dto.phone,
+        username: dto.username,
+        avatarUrl: dto.avatarUrl,
+        avatarHash: dto.avatarHash,
+      }).filter(([, v]) => v !== undefined),
+    )
+
+    const user = await this.prisma.user.update({
+      data,
       where: { id: userId },
       select: {
         id: true,

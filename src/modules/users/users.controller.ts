@@ -10,6 +10,11 @@ export const me = async (req: Request, res: Response) => {
   res.json(await service.getProfile(req.user.id))
 }
 
+export const update = async (req: Request, res: Response) => {
+  if (!req.user) throw unauthorized()
+  res.json(await service.updateProfile(req.body, req.user.id))
+}
+
 export const getMeByTelegramId = async (req: Request, res: Response) => {
   res.json(await service.getProfileByTelegramId(String(req.params.id)))
 }

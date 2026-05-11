@@ -13,7 +13,7 @@ model User {
   avatarHash    String?
   email         String              @unique
   passwordHash  String
-  username      String              @unique
+  username      String?             @unique
   name          String?
   phone         String?
   telegram_id   String?             @unique
