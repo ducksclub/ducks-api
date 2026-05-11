@@ -16,7 +16,7 @@ model User {
   username      String?             @unique
   name          String?
   phone         String?
-  telegram_id   String?             @unique
+  telegramId    String?             @unique
   role          String              @default("user")
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
