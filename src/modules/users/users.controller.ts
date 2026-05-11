@@ -21,16 +21,16 @@ export const getMeByTelegramId = async (req: Request, res: Response) => {
 
 export async function createUserController(req: Request, res: Response) {
   try {
-    const { telegram_id, name } = req.body
+    const { telegramId, name } = req.body
 
-    if (!telegram_id) {
+    if (!telegramId) {
       return res.status(400).json({
-        error: 'telegram_id is required',
+        error: 'telegramId is required',
       })
     }
 
     const user = await service.createUserService({
-      telegram_id,
+      telegramId,
       name,
     })
 

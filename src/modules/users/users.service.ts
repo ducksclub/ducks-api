@@ -3,7 +3,7 @@ import { notFound } from '../../common/errors/app-error'
 import { UpdateProfileDto } from './users.schemas'
 
 export type CreateUserDto = {
-  telegram_id: string
+  telegramId: string
   name?: string | null
 }
 
@@ -16,7 +16,7 @@ export class UsersService {
       select: {
         id: true,
         avatarUrl: true,
-        telegram_id: true,
+        telegramId: true,
         email: true,
         name: true,
         role: true,
@@ -48,7 +48,7 @@ export class UsersService {
       select: {
         id: true,
         avatarUrl: true,
-        telegram_id: true,
+        telegramId: true,
         email: true,
         name: true,
         role: true,
@@ -66,7 +66,7 @@ export class UsersService {
   async getProfileByTelegramId(telegramId: string) {
     const user = await this.prisma.user.findFirst({
       where: {
-        telegram_id: telegramId,
+        telegramId: telegramId,
       },
     })
 
@@ -75,24 +75,24 @@ export class UsersService {
   }
 
   async createUserService(data: CreateUserDto) {
-    const { telegram_id, name } = data
+    const { telegramId, name } = data
 
     const user = await this.prisma.user.upsert({
       where: {
-        telegram_id,
+        telegramId,
       },
       update: {
         ...(name ? { name } : {}),
       },
       create: {
-        telegram_id,
+        telegramId,
         name: name ?? null,
-        username: telegram_id,
+        username: telegramId,
 
         /**
          * system email for telegram-only users
          */
-        email: `tg_${telegram_id}@duck.local`,
+        email: `tg_${telegramId}@duck.local`,
 
         passwordHash: 'telegram-auth',
       },

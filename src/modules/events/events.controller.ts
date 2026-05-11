@@ -117,7 +117,7 @@ export const getReminders = async (req: Request, res: Response) => {
       startsAt: event.startsAt,
       reminderType: type, // 🔥 полезно для bot логики
       participants: event.registrations.map((r) => ({
-        telegram_id: r.user.telegram_id,
+        telegramId: r.user.telegramId,
       })),
     })),
   )

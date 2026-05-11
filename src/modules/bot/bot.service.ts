@@ -16,7 +16,7 @@ export class BotEventsService {
   private async getTelegramUser(telegramUserId: string) {
     const user = await this.prisma.user.findUnique({
       where: {
-        telegram_id: telegramUserId,
+        telegramId: telegramUserId,
       },
     })
 
@@ -40,7 +40,7 @@ export class BotEventsService {
        */
       const user = await tx.user.findUnique({
         where: {
-          telegram_id: String(telegramUserId),
+          telegramId: String(telegramUserId),
         },
       })
 
@@ -143,7 +143,7 @@ export class BotEventsService {
        */
       const user = await tx.user.findUnique({
         where: {
-          telegram_id: String(telegramUserId),
+          telegramId: String(telegramUserId),
         },
       })
 
@@ -194,7 +194,7 @@ export class BotEventsService {
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({
         where: {
-          telegram_id: String(telegramUserId),
+          telegramId: String(telegramUserId),
         },
       })
 

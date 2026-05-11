@@ -24,7 +24,7 @@ export class AuthService {
 
     const user = await this.prisma.user.create({
       data: {
-        telegram_id: String(telegramUser?.id) ?? null,
+        telegramId: String(telegramUser?.id) ?? null,
         email: dto.email,
         name: dto.name ?? null,
         passwordHash: await hashPassword(dto.password),
@@ -65,7 +65,7 @@ export class AuthService {
 
     let user = await this.prisma.user.findUnique({
       where: {
-        telegram_id: telegramId,
+        telegramId: telegramId,
       },
     })
 
@@ -75,7 +75,7 @@ export class AuthService {
     if (!user) {
       user = await this.prisma.user.create({
         data: {
-          telegram_id: telegramId,
+          telegramId: telegramId,
           name: telegramUser.first_name,
           email: `tg_${telegramId}@telegram.local`,
           passwordHash: await hashPassword('telegram-password'),
