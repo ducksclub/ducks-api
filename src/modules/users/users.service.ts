@@ -14,10 +14,13 @@ export class UsersService {
       where: { id: userId },
       select: {
         id: true,
+        avatarUrl: true,
         telegram_id: true,
         email: true,
         name: true,
         role: true,
+        phone: true,
+        username: true,
         createdAt: true,
         updatedAt: true,
         ratings: { select: { gameType: true, points: true } },
@@ -51,6 +54,7 @@ export class UsersService {
       create: {
         telegram_id,
         name: name ?? null,
+        username: telegram_id,
 
         /**
          * system email for telegram-only users

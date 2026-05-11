@@ -13,6 +13,7 @@ async function main() {
       name: 'Club Admin',
       role: Roles.admin,
       passwordHash: await hashPassword('Admin12345!'),
+      username: 'admin',
     },
   })
 
@@ -24,6 +25,7 @@ async function main() {
       name: 'Demo Player',
       role: Roles.user,
       passwordHash: await hashPassword('Player12345!'),
+      username: 'player',
     },
   })
 

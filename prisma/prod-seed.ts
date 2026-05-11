@@ -30,6 +30,7 @@ async function main() {
       name: 'Club Admin',
       role: 'admin',
       passwordHash: await hashPassword('Admin12345!'),
+      username: 'admin',
     },
   })
 }
