@@ -8,7 +8,7 @@ export type Role = (typeof Roles)[keyof typeof Roles]
 export const GameTypes = {
   poker: 'poker',
   darts: 'darts',
-  billiards: 'billiards',
+  pool: 'pool',
   quiz: 'quiz',
   mafia: 'mafia',
 } as const

@@ -31,6 +31,7 @@ model Event {
   id                     String              @id @default(cuid())
   imageUrl               String?
   imageHash              String?
+  title                  String
   city                   String
   address                String
   features               String

@@ -120,6 +120,7 @@ export class EventsService {
   async create(dto: CreateEventDto) {
     return this.prisma.event.create({
       data: {
+        title: dto.title,
         city: dto.city,
         features: dto.features,
         gameRules: dto.gameRules,
@@ -138,7 +139,11 @@ export class EventsService {
 
   async update(id: string, dto: UpdateEventDto) {
     const data: Prisma.EventUpdateInput = {
+      ...(dto.title !== undefined && { title: dto.title }),
+      ...(dto.city !== undefined && { city: dto.city }),
       ...(dto.address !== undefined && { address: dto.address }),
+      ...(dto.gameRules !== undefined && { gameRules: dto.gameRules }),
+      ...(dto.features !== undefined && { features: dto.features }),
       ...(dto.gameType !== undefined && { gameType: dto.gameType }),
       ...(dto.startsAt !== undefined && { startsAt: dto.startsAt }),
       ...(dto.endsAt !== undefined && { endsAt: dto.endsAt }),

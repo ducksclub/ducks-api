@@ -52,6 +52,7 @@ async function main() {
    */
   const event = await prisma.event.create({
     data: {
+      title: 'Title',
       city: 'Astana',
       address: 'Arena Duck Club',
       features: '5v5, casual, friendly',
