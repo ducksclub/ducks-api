@@ -111,10 +111,8 @@ async function main() {
   /**
    * CONTENT PAGE
    */
-  await prisma.contentPage.upsert({
-    where: { key: 'rules' },
-    update: {},
-    create: {
+  await prisma.contentPage.create({
+    data: {
       key: 'rules',
       title: 'Правила клуба',
       body: '1. Уважай игроков\n2. Без токсичности\n3. Играем честно',
