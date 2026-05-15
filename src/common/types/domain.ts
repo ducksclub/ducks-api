@@ -32,9 +32,10 @@ export const RegistrationStatuses = {
 export type RegistrationStatus = (typeof RegistrationStatuses)[keyof typeof RegistrationStatuses]
 
 export const ContentPageKeys = {
-  rules: 'rules',
-  about: 'about',
-  faq: 'faq',
+  FAQ: 'faq',
+  RULES: 'rules',
+  ABOUT: 'about',
+  POKER_LEVELS: 'poker-levels',
 } as const
 
 export type ContentPageKey = (typeof ContentPageKeys)[keyof typeof ContentPageKeys]

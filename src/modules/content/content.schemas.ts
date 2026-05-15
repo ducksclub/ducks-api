@@ -1,11 +1,13 @@
-import { z } from "zod";
-import { ContentPageKeys, enumValues } from "../../common/types/domain.js";
+import { z } from 'zod'
+import { ContentPageKeys, enumValues } from '../../common/types/domain.js'
 
-export const contentKeyParamsSchema = z.object({ key: z.enum(enumValues(ContentPageKeys)) });
+export const contentKeyParamsSchema = z.object({ id: z.string() })
+export const contentKeyByKeyParamsSchema = z.object({ key: z.enum(enumValues(ContentPageKeys)) })
 
 export const upsertContentSchema = z.object({
+  key: z.enum(enumValues(ContentPageKeys)),
   title: z.string().min(2).max(160),
-  body: z.string().min(1).max(50000)
-});
+  body: z.string().min(1).max(50000),
+})
 
-export type UpsertContentDto = z.infer<typeof upsertContentSchema>;
+export type UpsertContentDto = z.infer<typeof upsertContentSchema>

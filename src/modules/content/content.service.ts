@@ -7,21 +7,27 @@ export class ContentService {
   constructor(private readonly prisma: PrismaClient) {}
 
   async getAll() {
-    const page = await this.prisma.contentPage.findMany()
-    if (!page) throw notFound('Content page not found')
-    return page
+    const content = await this.prisma.contentPage.findMany()
+    if (!content) throw notFound('Content page not found')
+    return content
+  }
+
+  async getById(id: string) {
+    const content = await this.prisma.contentPage.findFirst({ where: { id } })
+    if (!content) throw notFound('Content page not found')
+    return content
   }
 
   async getByKey(key: ContentPageKey) {
-    const page = await this.prisma.contentPage.findUnique({ where: { key } })
-    if (!page) throw notFound('Content page not found')
-    return page
+    const contents = await this.prisma.contentPage.findMany({ where: { key } })
+    if (!contents.length) throw notFound('Content page not found')
+    return contents
   }
 
-  async upsert(key: ContentPageKey, dto: UpsertContentDto) {
+  async upsert(id: string, dto: UpsertContentDto) {
     return this.prisma.contentPage.upsert({
-      where: { key },
-      create: { key, ...dto },
+      where: { id },
+      create: { ...dto },
       update: dto,
     })
   }

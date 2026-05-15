@@ -94,7 +94,7 @@ model Feedback {
 
 model ContentPage {
   id        String   @id @default(cuid())
-  key       String   @unique
+  key       String
   title     String
   body      String
   createdAt DateTime @default(now())
