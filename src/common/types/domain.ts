@@ -25,8 +25,9 @@ export const EventStatuses = {
 export type EventStatus = (typeof EventStatuses)[keyof typeof EventStatuses]
 
 export const RegistrationStatuses = {
-  active: 'active',
-  cancelled: 'cancelled',
+  registered: 'REGISTERED',
+  waiting: 'WAITING',
+  cancelled: 'CANCELLED',
 } as const
 
 export type RegistrationStatus = (typeof RegistrationStatuses)[keyof typeof RegistrationStatuses]

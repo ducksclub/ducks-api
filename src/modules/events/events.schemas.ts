@@ -20,6 +20,7 @@ const eventBaseSchema = z.object({
   endsAt: z.coerce.date().optional(),
   location: z.string().max(255).optional(),
   participantLimit: z.number().int().min(1).max(10000),
+  seatsPerTable: z.number().int().min(1).max(1000).default(9),
   pointsForParticipation: z.number().int().min(0).max(100000).default(10),
   status: z.enum(enumValues(EventStatuses)).default(EventStatuses.published),
   imageUrl: z.string().optional(),

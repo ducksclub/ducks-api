@@ -41,6 +41,7 @@ model Event {
   reminderSent1h         Boolean             @default(false)
   reminderSent10m        Boolean             @default(false)
   participantLimit       Int
+  seatsPerTable          Int                 @default(9)
   pointsForParticipation Int                 @default(10)
   status                 String              @default("published")
   createdAt              DateTime            @default(now())
@@ -55,14 +56,17 @@ model EventRegistration {
   id          String    @id @default(cuid())
   userId      String
   eventId     String
-  status      String    @default("active")
+  status      String    @default("REGISTERED")
   createdAt   DateTime  @default(now())
   cancelledAt DateTime?
   position    Int?
+  tableNumber Int?
+  seatNumber  Int?
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
+  @@unique([eventId, tableNumber, seatNumber])
   @@index([eventId, status])
   @@index([userId, status])
 }

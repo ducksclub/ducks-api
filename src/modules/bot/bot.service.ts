@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 
-import { badRequest, conflict, notFound } from '../../common/errors/app-error.js'
+import { notFound } from '../../common/errors/app-error.js'
 
-import { EventStatuses, RegistrationStatuses } from '../../common/types/domain.js'
+import { EventsService } from '../events/events.service.js'
 
 export class BotEventsService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -34,101 +34,8 @@ export class BotEventsService {
    */
 
   async registerUser(eventId: string, telegramUserId: string) {
-    return this.prisma.$transaction(async (tx) => {
-      /**
-       * find telegram user
-       */
-      const user = await tx.user.findUnique({
-        where: {
-          telegramId: String(telegramUserId),
-        },
-      })
-
-      if (!user) {
-        throw notFound('Telegram user not found')
-      }
-
-      /**
-       * find event
-       */
-      const event = await tx.event.findUnique({
-        where: { id: eventId },
-        include: {
-          _count: {
-            select: {
-              registrations: {
-                where: {
-                  status: RegistrationStatuses.active,
-                },
-              },
-            },
-          },
-        },
-      })
-
-      if (!event) {
-        throw notFound('Event not found')
-      }
-
-      /**
-       * event validation
-       */
-      if (event.status !== EventStatuses.published) {
-        throw badRequest('Registration is available only for published events')
-      }
-
-      /**
-       * participant limit
-       */
-      if (event._count.registrations >= event.participantLimit) {
-        throw conflict('Participant limit reached')
-      }
-
-      /**
-       * existing registration
-       */
-      const existing = await tx.eventRegistration.findUnique({
-        where: {
-          userId_eventId: {
-            userId: user.id,
-            eventId,
-          },
-        },
-      })
-
-      /**
-       * already active
-       */
-      if (existing && existing.status === RegistrationStatuses.active) {
-        throw conflict('Already registered for this event')
-      }
-
-      /**
-       * restore registration
-       */
-      if (existing) {
-        return tx.eventRegistration.update({
-          where: {
-            id: existing.id,
-          },
-          data: {
-            status: RegistrationStatuses.active,
-            cancelledAt: null,
-          },
-        })
-      }
-
-      /**
-       * create registration
-       */
-      return tx.eventRegistration.create({
-        data: {
-          userId: user.id,
-          eventId,
-          status: RegistrationStatuses.active,
-        },
-      })
-    })
+    const user = await this.getTelegramUser(String(telegramUserId))
+    return new EventsService(this.prisma).registerUser(eventId, user.id)
   }
 
   /**
@@ -137,52 +44,8 @@ export class BotEventsService {
    * =====================================
    */
   async cancelRegistration(eventId: string, telegramUserId: string) {
-    return this.prisma.$transaction(async (tx) => {
-      /**
-       * find telegram user
-       */
-      const user = await tx.user.findUnique({
-        where: {
-          telegramId: String(telegramUserId),
-        },
-      })
-
-      if (!user) {
-        throw notFound('Telegram user not found')
-      }
-
-      /**
-       * find registration
-       */
-      const registration = await tx.eventRegistration.findUnique({
-        where: {
-          userId_eventId: {
-            userId: user.id,
-            eventId,
-          },
-        },
-      })
-
-      /**
-       * validation
-       */
-      if (!registration || registration.status !== RegistrationStatuses.active) {
-        throw notFound('Active registration not found')
-      }
-
-      /**
-       * cancel
-       */
-      return tx.eventRegistration.update({
-        where: {
-          id: registration.id,
-        },
-        data: {
-          status: RegistrationStatuses.cancelled,
-          cancelledAt: new Date(),
-        },
-      })
-    })
+    const user = await this.getTelegramUser(String(telegramUserId))
+    return new EventsService(this.prisma).cancelRegistration(eventId, user.id)
   }
 
   /**
@@ -244,7 +107,7 @@ export class BotEventsService {
   //         select: {
   //           registrations: {
   //             where: {
-  //               status: RegistrationStatuses.active,
+  //               status: RegistrationStatuses.registered,
   //             },
   //           },
   //         },
@@ -278,7 +141,7 @@ export class BotEventsService {
   //     where: {
   //       eventId,
 
-  //       status: RegistrationStatuses.active,
+  //       status: RegistrationStatuses.registered,
   //     },
 
   //     include: {

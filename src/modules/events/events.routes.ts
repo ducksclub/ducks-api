@@ -11,6 +11,7 @@ import {
   finalizeEvent,
   getEvent,
   getEventParticipants,
+  getMyEventSeat,
   getReminders,
   listActiveEvents,
   listEvents,
@@ -61,6 +62,13 @@ eventsRouter.get(
   authenticate,
   validate({ params: eventIdParamsSchema }),
   asyncHandler(registrationCheckEvent),
+)
+
+eventsRouter.get(
+  '/:id/my-seat',
+  authenticate,
+  validate({ params: eventIdParamsSchema }),
+  asyncHandler(getMyEventSeat),
 )
 
 eventsRouter.post(

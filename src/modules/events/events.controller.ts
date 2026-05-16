@@ -69,6 +69,15 @@ export const cancelEventRegistration = async (req: Request, res: Response) => {
   res.json(data)
 }
 
+export const getMyEventSeat = async (req: Request, res: Response) => {
+  const userId = req.user?.id
+  const id = String(req.params.id)
+  if (!userId) throw unauthorized()
+
+  const data = await service.getMySeat(id, userId)
+  res.json(data)
+}
+
 export const listActiveEvents = async (req: Request, res: Response) => {
   const data = await service.listActiveNow()
   res.json({ data })
