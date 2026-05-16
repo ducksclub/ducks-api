@@ -133,7 +133,7 @@ async function main() {
   const allPokerParticipants = [user, ...pokerUsers]
 
   for (let index = 0; index < allPokerParticipants.length; index++) {
-    const participant = allPokerParticipants[index]
+    const participant: any = allPokerParticipants[index]
     const position = index + 1
 
     const isRegistered = position <= event.participantLimit
