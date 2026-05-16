@@ -161,13 +161,13 @@ async function main() {
     where: {
       userId_gameType: {
         userId: user.id,
-        gameType: 'cs2',
+        gameType: 'poker',
       },
     },
     update: {},
     create: {
       userId: user.id,
-      gameType: 'cs2',
+      gameType: 'poker',
       points: 1200,
     },
   })
