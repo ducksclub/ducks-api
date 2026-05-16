@@ -15,7 +15,7 @@ RUN npm ci
 FROM deps AS build
 WORKDIR /app
 
-ARG DATABASE_URL="postgresql://user:password@localhost:5432/db?schema=public"
+ARG DATABASE_URL="file:./dev.db"
 ENV DATABASE_URL=${DATABASE_URL}
 
 COPY tsconfig.json ./
@@ -27,6 +27,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=4000
+ENV DATABASE_URL="file:/app/data/ducks.db"
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates openssl \
@@ -34,12 +35,12 @@ RUN apt-get update \
   && useradd --create-home --shell /usr/sbin/nologin appuser
 
 COPY package.json package-lock.json ./
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY prisma.config.ts ./
 COPY prisma ./prisma
 
-RUN mkdir -p uploads \
+RUN mkdir -p uploads data \
   && chown -R appuser:appuser /app
 
 USER appuser
