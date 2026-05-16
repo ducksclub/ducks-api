@@ -15,6 +15,9 @@ RUN npm ci
 FROM deps AS build
 WORKDIR /app
 
+ARG DATABASE_URL="postgresql://user:password@localhost:5432/db?schema=public"
+ENV DATABASE_URL=${DATABASE_URL}
+
 COPY tsconfig.json ./
 COPY src ./src
 RUN npm run prisma:generate && npm run build
