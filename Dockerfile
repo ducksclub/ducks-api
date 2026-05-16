@@ -8,6 +8,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
+COPY prisma.config.ts ./
 COPY prisma ./prisma
 RUN npm ci
 
@@ -32,6 +33,7 @@ RUN apt-get update \
 COPY package.json package-lock.json ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+COPY prisma.config.ts ./
 COPY prisma ./prisma
 
 RUN mkdir -p uploads \
