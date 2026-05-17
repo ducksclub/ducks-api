@@ -2,6 +2,12 @@ import { Prisma, PrismaClient } from '@prisma/client'
 import { badRequest, conflict, notFound } from '../../common/errors/app-error.js'
 import { EventStatuses, GameTypes, RegistrationStatuses } from '../../common/types/domain.js'
 import { getPagination, paginated } from '../../common/utils/pagination.js'
+import {
+  EventRegistrationNotificationTypes,
+  type EventRegistrationNotificationPayload,
+  type EventRegistrationNotificationType,
+  sendEventRegistrationNotification,
+} from '../telegram-bot/telegram-bot.api.js'
 import type {
   CreateEventDto,
   EventIdParams,
@@ -14,6 +20,27 @@ export class EventsService {
   constructor(private readonly prisma: PrismaClient) {}
 
   private readonly seatRevealWindowMs = 15 * 60 * 1000
+
+  private buildEventRegistrationNotificationPayload(params: {
+    type: EventRegistrationNotificationType
+    telegramId: string | null
+    event: { title: string; startsAt: Date; address: string }
+    waitingPosition?: number
+  }): EventRegistrationNotificationPayload | null {
+    if (!params.telegramId) return null
+
+    const telegramUserId = Number(params.telegramId)
+    if (!Number.isFinite(telegramUserId)) return null
+
+    return {
+      type: params.type,
+      telegramUserId,
+      eventTitle: params.event.title,
+      eventDate: params.event.startsAt.toISOString(),
+      eventAddress: params.event.address,
+      ...(params.waitingPosition !== undefined && { waitingPosition: params.waitingPosition }),
+    }
+  }
 
   async get(params: EventIdParams) {
     const event = await this.prisma.event.findUnique({
@@ -291,10 +318,10 @@ export class EventsService {
     return this.findFirstAvailablePokerSeat(event, occupiedSeats)
   }
 
-  private async promoteFirstWaitingPokerRegistration(
+  private async promoteNextWaitingUser(
     tx: Prisma.TransactionClient,
     eventId: string,
-    event: { participantLimit: number; seatsPerTable: number },
+    event: { title: string; startsAt: Date; address: string; gameType: string; participantLimit: number; seatsPerTable: number },
     preferredSeat?: { tableNumber: number | null; seatNumber: number | null },
   ) {
     const nextWaiting = await tx.eventRegistration.findFirst({
@@ -307,30 +334,46 @@ export class EventsService {
 
     if (!nextWaiting) return null
 
-    const seat =
-      preferredSeat?.tableNumber && preferredSeat.seatNumber
+    const isPoker = this.isPokerEvent(event.gameType)
+    const seat = isPoker
+      ? preferredSeat?.tableNumber && preferredSeat.seatNumber
         ? {
             tableNumber: preferredSeat.tableNumber,
             seatNumber: preferredSeat.seatNumber,
           }
         : await this.getNextPokerSeat(tx, eventId, event)
+      : null
 
-    if (!seat) return null
+    if (isPoker && !seat) return null
 
-    return tx.eventRegistration.update({
+    const promotedRegistration = await tx.eventRegistration.update({
       where: { id: nextWaiting.id },
       data: {
         status: RegistrationStatuses.registered,
-        tableNumber: seat.tableNumber,
-        seatNumber: seat.seatNumber,
+        tableNumber: seat?.tableNumber ?? null,
+        seatNumber: seat?.seatNumber ?? null,
         cancelledAt: null,
       },
     })
+
+    const user = await tx.user.findUnique({
+      where: { id: promotedRegistration.userId },
+      select: { telegramId: true },
+    })
+
+    return {
+      registration: promotedRegistration,
+      notification: this.buildEventRegistrationNotificationPayload({
+        type: EventRegistrationNotificationTypes.waitingListPromoted,
+        telegramId: user?.telegramId ?? null,
+        event,
+      }),
+    }
   }
 
   async registerUser(eventId: string, userId: string) {
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const result = await this.prisma.$transaction(async (tx) => {
         const event = await tx.event.findUnique({
           where: { id: eventId },
           include: {
@@ -352,10 +395,6 @@ export class EventsService {
 
         const isPoker = this.isPokerEvent(event.gameType)
 
-        if (!isPoker && event._count.registrations >= event.participantLimit) {
-          throw conflict('Participant limit reached')
-        }
-
         const existing = await tx.eventRegistration.findUnique({
           where: {
             userId_eventId: { userId, eventId },
@@ -369,6 +408,11 @@ export class EventsService {
         ) {
           throw conflict('Already registered for this event')
         }
+
+        const user = await tx.user.findUnique({
+          where: { id: userId },
+          select: { telegramId: true },
+        })
 
         if (isPoker) {
           const seat = await this.getNextPokerSeat(tx, eventId, event)
@@ -406,36 +450,61 @@ export class EventsService {
               },
             })
 
-            return {
+            const waitingPosition = waitingBefore + 1
+            const registrationResponse = {
               ...savedRegistration,
               message: 'Основные места заняты. Вы добавлены в список ожидания',
               isWaiting: true,
-              waitingPosition: waitingBefore + 1,
+              waitingPosition,
+            }
+
+            return {
+              registration: registrationResponse,
+              notification: this.buildEventRegistrationNotificationPayload({
+                type: EventRegistrationNotificationTypes.addedToWaitingList,
+                telegramId: user?.telegramId ?? null,
+                event,
+                waitingPosition,
+              }),
             }
           }
 
           return {
-            ...savedRegistration,
-            message: 'Вы успешно записаны на игру',
-            isWaiting: false,
+            registration: {
+              ...savedRegistration,
+              message: 'Вы успешно записаны на игру',
+              isWaiting: false,
+            },
+            notification: this.buildEventRegistrationNotificationPayload({
+              type: EventRegistrationNotificationTypes.registeredAsParticipant,
+              telegramId: user?.telegramId ?? null,
+              event,
+            }),
           }
         }
+
+        const participantCount = event._count.registrations
+        const status =
+          participantCount < event.participantLimit
+            ? RegistrationStatuses.registered
+            : RegistrationStatuses.waiting
 
         const registration = existing
           ? await tx.eventRegistration.update({
               where: { id: existing.id },
               data: {
-                status: RegistrationStatuses.registered,
+                status,
                 cancelledAt: null,
                 tableNumber: null,
                 seatNumber: null,
+                createdAt: new Date(),
               },
             })
           : await tx.eventRegistration.create({
               data: {
                 userId,
                 eventId,
-                status: RegistrationStatuses.registered,
+                status,
                 tableNumber: null,
                 seatNumber: null,
               },
@@ -460,8 +529,47 @@ export class EventsService {
         //   },
         // })
 
-        return registration
+        if (status === RegistrationStatuses.waiting) {
+          const waitingBefore = await tx.eventRegistration.count({
+            where: {
+              eventId,
+              status: RegistrationStatuses.waiting,
+              createdAt: { lt: registration.createdAt },
+            },
+          })
+          const waitingPosition = waitingBefore + 1
+
+          return {
+            registration: {
+              ...registration,
+              isWaiting: true,
+              waitingPosition,
+            },
+            notification: this.buildEventRegistrationNotificationPayload({
+              type: EventRegistrationNotificationTypes.addedToWaitingList,
+              telegramId: user?.telegramId ?? null,
+              event,
+              waitingPosition,
+            }),
+          }
+        }
+
+        return {
+          registration: {
+            ...registration,
+            isWaiting: false,
+          },
+          notification: this.buildEventRegistrationNotificationPayload({
+            type: EventRegistrationNotificationTypes.registeredAsParticipant,
+            telegramId: user?.telegramId ?? null,
+            event,
+          }),
+        }
       })
+
+      await sendEventRegistrationNotification(result.notification)
+
+      return result.registration
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw conflict('Место уже занято, попробуйте записаться ещё раз')
@@ -472,7 +580,7 @@ export class EventsService {
   }
 
   async cancelRegistration(eventId: string, userId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const event = await tx.event.findUnique({
         where: { id: eventId },
       })
@@ -503,8 +611,10 @@ export class EventsService {
         },
       })
 
-      if (this.isPokerEvent(event.gameType) && registration.status === RegistrationStatuses.registered) {
-        await this.promoteFirstWaitingPokerRegistration(
+      let promotedNotification: EventRegistrationNotificationPayload | null = null
+
+      if (registration.status === RegistrationStatuses.registered) {
+        const promoted = await this.promoteNextWaitingUser(
           tx,
           eventId,
           event,
@@ -513,10 +623,19 @@ export class EventsService {
             seatNumber: registration.seatNumber,
           },
         )
+
+        promotedNotification = promoted?.notification ?? null
       }
 
-      return cancelledRegistration
+      return {
+        registration: cancelledRegistration,
+        promotedNotification,
+      }
     })
+
+    await sendEventRegistrationNotification(result.promotedNotification)
+
+    return result.registration
   }
 
   async getMySeat(eventId: string, userId: string) {

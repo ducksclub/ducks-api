@@ -15,6 +15,8 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
   MAILTRAP_TOKEN: z.string().min(1),
   ADMIN_EMAIL: z.string().email(),
+  TELEGRAM_BOT_API_URL: z.string().url().optional(),
+  INTERNAL_API_TOKEN: z.string().min(1).optional(),
 })
 
 export const env = envSchema.parse(process.env)

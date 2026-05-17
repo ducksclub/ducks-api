@@ -13,6 +13,7 @@ describe('EventsService', () => {
       update: vi.fn(),
       count: vi.fn(),
     },
+    user: { findUnique: vi.fn() },
     rating: { upsert: vi.fn() },
   }
   const prisma = {
@@ -24,6 +25,13 @@ describe('EventsService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useRealTimers()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+      }),
+    )
+    tx.user.findUnique.mockResolvedValue({ telegramId: '123456789' })
   })
 
   it('registers a non-poker user with the existing participant limit behavior', async () => {
@@ -31,6 +39,9 @@ describe('EventsService', () => {
       id: 'event-1',
       gameType: GameTypes.darts,
       status: EventStatuses.published,
+      title: 'Darts event',
+      startsAt: new Date('2026-05-16T10:00:00.000Z'),
+      address: 'DUCKS GameClub',
       participantLimit: 2,
       _count: { registrations: 1 },
     })
@@ -54,11 +65,52 @@ describe('EventsService', () => {
     })
   })
 
+  it('puts non-poker users into waiting list when participant limit is reached', async () => {
+    tx.event.findUnique.mockResolvedValue({
+      id: 'event-1',
+      gameType: GameTypes.darts,
+      status: EventStatuses.published,
+      title: 'Darts event',
+      startsAt: new Date('2026-05-16T10:00:00.000Z'),
+      address: 'DUCKS GameClub',
+      participantLimit: 2,
+      _count: { registrations: 2 },
+    })
+    tx.eventRegistration.findUnique.mockResolvedValue(null)
+    tx.eventRegistration.create.mockResolvedValue({
+      id: 'registration-1',
+      status: RegistrationStatuses.waiting,
+      createdAt: new Date('2026-05-16T09:00:00.000Z'),
+    })
+    tx.eventRegistration.count.mockResolvedValue(0)
+
+    const result = await new EventsService(prisma as never).registerUser('event-1', 'user-1')
+
+    expect(result).toMatchObject({
+      id: 'registration-1',
+      status: RegistrationStatuses.waiting,
+      isWaiting: true,
+      waitingPosition: 1,
+    })
+    expect(tx.eventRegistration.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        eventId: 'event-1',
+        status: RegistrationStatuses.waiting,
+        tableNumber: null,
+        seatNumber: null,
+      },
+    })
+  })
+
   it('assigns poker seats by table and seat order', async () => {
     tx.event.findUnique.mockResolvedValue({
       id: 'event-1',
       gameType: GameTypes.poker,
       status: EventStatuses.published,
+      title: 'Poker event',
+      startsAt: new Date('2026-05-16T10:00:00.000Z'),
+      address: 'DUCKS GameClub',
       participantLimit: 20,
       seatsPerTable: 9,
       _count: { registrations: 9 },
@@ -101,6 +153,9 @@ describe('EventsService', () => {
       id: 'event-1',
       gameType: GameTypes.poker,
       status: EventStatuses.published,
+      title: 'Poker event',
+      startsAt: new Date('2026-05-16T10:00:00.000Z'),
+      address: 'DUCKS GameClub',
       participantLimit: 2,
       seatsPerTable: 9,
       _count: { registrations: 2 },
@@ -143,6 +198,9 @@ describe('EventsService', () => {
     tx.event.findUnique.mockResolvedValue({
       id: 'event-1',
       gameType: GameTypes.poker,
+      title: 'Poker event',
+      startsAt: new Date('2026-05-16T10:00:00.000Z'),
+      address: 'DUCKS GameClub',
       participantLimit: 2,
       seatsPerTable: 9,
     })

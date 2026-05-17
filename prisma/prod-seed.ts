@@ -90,7 +90,7 @@ async function main() {
    *
    * Всего мы ниже регистрируем 11 пользователей.
    * Поэтому:
-   * - первые 10 будут REGISTERED
+   * - первые 10 будут PARTICIPANT
    * - 11-й будет WAITING
    */
   const event = await prisma.event.create({
@@ -122,7 +122,7 @@ async function main() {
    * 2-11. Poker Player 1-10
    *
    * Логика:
-   * - если position <= participantLimit -> REGISTERED
+   * - если position <= participantLimit -> PARTICIPANT
    * - если position > participantLimit -> WAITING
    *
    * Распределение мест:
@@ -146,7 +146,7 @@ async function main() {
       data: {
         userId: participant.id,
         eventId: event.id,
-        status: isRegistered ? 'REGISTERED' : 'WAITING',
+        status: isRegistered ? 'PARTICIPANT' : 'WAITING',
         position,
         tableNumber,
         seatNumber,
@@ -228,7 +228,7 @@ async function main() {
   console.log(`seatsPerTable: ${event.seatsPerTable}`)
   console.log('')
   console.log('Expected registrations:')
-  console.log('1-10 -> REGISTERED')
+  console.log('1-10 -> PARTICIPANT')
   console.log('11 -> WAITING')
 }
 
