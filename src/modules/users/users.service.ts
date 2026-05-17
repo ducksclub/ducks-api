@@ -1,10 +1,13 @@
 import type { PrismaClient } from '@prisma/client'
 import { notFound } from '../../common/errors/app-error'
 import { UpdateProfileDto } from './users.schemas'
+import { PromoLinkService } from '../promo-links/promo-link.service'
 
 export type CreateUserDto = {
   telegramId: string
   name?: string | null
+  promoCode?: string | null
+  sourceCode?: string | null
 }
 
 export class UsersService {
@@ -21,6 +24,8 @@ export class UsersService {
         name: true,
         role: true,
         phone: true,
+        promoLinkId: true,
+        sourceCode: true,
         username: true,
         createdAt: true,
         updatedAt: true,
@@ -53,6 +58,8 @@ export class UsersService {
         name: true,
         role: true,
         phone: true,
+        promoLinkId: true,
+        sourceCode: true,
         username: true,
         createdAt: true,
         updatedAt: true,
@@ -76,26 +83,56 @@ export class UsersService {
 
   async createUserService(data: CreateUserDto) {
     const { telegramId, name } = data
+    const promoLinkService = new PromoLinkService(this.prisma)
+    const explicitPromoCode = data.promoCode ?? data.sourceCode ?? null
 
-    const user = await this.prisma.user.upsert({
-      where: {
+    const user = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.user.findUnique({
+        where: { telegramId },
+        select: { id: true, promoLinkId: true, sourceCode: true },
+      })
+
+      const promoLink = await promoLinkService.findActivePromoForRegistration(
+        tx,
+        explicitPromoCode,
         telegramId,
-      },
-      update: {
-        ...(name ? { name } : {}),
-      },
-      create: {
-        telegramId,
-        name: name ?? null,
-        username: telegramId,
+      )
 
-        /**
-         * system email for telegram-only users
-         */
-        email: `tg_${telegramId}@duck.local`,
+      if (existing) {
+        if (promoLink && !existing.promoLinkId && !existing.sourceCode) {
+          await promoLinkService.attachPromoToExistingUser(tx, existing.id, promoLink)
+        }
 
-        passwordHash: 'telegram-auth',
-      },
+        return tx.user.update({
+          where: { telegramId },
+          data: {
+            ...(name ? { name } : {}),
+          },
+        })
+      }
+
+      const createdUser = await tx.user.create({
+        data: {
+          telegramId,
+          name: name ?? null,
+          username: telegramId,
+
+          /**
+           * system email for telegram-only users
+           */
+          email: `tg_${telegramId}@duck.local`,
+
+          passwordHash: 'telegram-auth',
+          promoLinkId: promoLink?.id ?? null,
+          sourceCode: promoLink?.code ?? null,
+        },
+      })
+
+      if (promoLink) {
+        await promoLinkService.incrementRegistration(tx, promoLink.id)
+      }
+
+      return createdUser
     })
 
     return user

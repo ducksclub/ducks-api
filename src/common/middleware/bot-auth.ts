@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { unauthorized } from '../errors/app-error'
+import { unauthorized } from '../errors/app-error.js'
 
 export const botAuth = (req: Request, _res: Response, next: NextFunction): void => {
   const header = req.headers.authorization

@@ -21,7 +21,7 @@ export const getMeByTelegramId = async (req: Request, res: Response) => {
 
 export async function createUserController(req: Request, res: Response) {
   try {
-    const { telegramId, name } = req.body
+    const { telegramId, name, promoCode, sourceCode } = req.body
 
     if (!telegramId) {
       return res.status(400).json({
@@ -32,6 +32,8 @@ export async function createUserController(req: Request, res: Response) {
     const user = await service.createUserService({
       telegramId,
       name,
+      promoCode,
+      sourceCode,
     })
 
     return res.json(user)

@@ -15,6 +15,10 @@ import { ratingsRouter } from './modules/ratings/ratings.routes.js'
 import { usersRouter } from './modules/users/users.routes.js'
 import { uploadRouter } from './modules/upload/upload.routes.js'
 import { contactRouter } from './modules/contact/contact.routes.js'
+import {
+  adminPromoLinksRouter,
+  publicPromoLinksRouter,
+} from './modules/promo-links/promo-link.routes.js'
 import path from 'path'
 
 export const app = express()
@@ -44,6 +48,11 @@ app.use('/api/ratings', ratingsRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/content', contentRouter)
 app.use('/api/bot', botRouter)
+app.use('/api/admin/promo-links', adminPromoLinksRouter)
+app.use('/api/promo-links', publicPromoLinksRouter)
+
+app.use('/admin/promo-links', adminPromoLinksRouter)
+app.use('/promo-links', publicPromoLinksRouter)
 
 app.use((_req, res) =>
   res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } }),

@@ -16,6 +16,8 @@ const envSchema = z.object({
   MAILTRAP_TOKEN: z.string().min(1),
   ADMIN_EMAIL: z.string().email(),
   TELEGRAM_BOT_API_URL: z.string().url().optional(),
+  APP_PUBLIC_URL: z.string().url().default('http://localhost:3000'),
+  TELEGRAM_BOT_USERNAME: z.string().min(1).optional(),
   INTERNAL_API_TOKEN: z.string().min(1).optional(),
 })
 

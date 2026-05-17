@@ -16,14 +16,48 @@ model User {
   name          String?
   phone         String?
   telegramId    String?             @unique
+  promoLinkId   String?
+  sourceCode    String?
   role          String              @default("user")
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
+  promoLink     PromoLink?          @relation(fields: [promoLinkId], references: [id], onDelete: SetNull)
   registrations EventRegistration[]
   ratings       Rating[]
   feedback      Feedback[]
 
   @@index([role])
+  @@index([promoLinkId])
+  @@index([sourceCode])
+}
+
+model PromoLink {
+  id                 String              @id @default(cuid())
+  name               String
+  code               String              @unique
+  clicksCount        Int                 @default(0)
+  registrationsCount Int                 @default(0)
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  users              User[]
+  startSessions      PromoStartSession[]
+
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model PromoStartSession {
+  id             String     @id @default(cuid())
+  telegramUserId String     @unique
+  promoCode      String
+  promoLinkId    String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  promoLink      PromoLink? @relation(fields: [promoLinkId], references: [id], onDelete: SetNull)
+
+  @@index([promoCode])
+  @@index([promoLinkId])
 }
 
 model Event {

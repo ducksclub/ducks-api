@@ -13,9 +13,17 @@ vi.mock('../../src/common/utils/jwt.js', () => ({
 
 describe('AuthService', () => {
   const prisma = {
+    $transaction: vi.fn(async (callback: (tx: typeof prisma) => Promise<unknown>) => callback(prisma)),
     user: {
       findUnique: vi.fn(),
       create: vi.fn(),
+    },
+    promoLink: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+    promoStartSession: {
+      findUnique: vi.fn(),
     },
   }
 
@@ -25,10 +33,14 @@ describe('AuthService', () => {
 
   it('registers a new user and returns token', async () => {
     prisma.user.findUnique.mockResolvedValue(null)
+    prisma.promoStartSession.findUnique.mockResolvedValue(null)
     prisma.user.create.mockResolvedValue({
       id: 'user-1',
       email: 'user@example.com',
       name: 'User',
+      phone: null,
+      sourceCode: null,
+      promoLinkId: null,
       role: Roles.user,
       createdAt: new Date(),
       updatedAt: new Date(),

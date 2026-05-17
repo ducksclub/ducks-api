@@ -4,6 +4,23 @@ export const registerSchema = z.object({
   email: z.string().email().toLowerCase(),
   password: z.string().min(8).max(128),
   name: z.string().min(2).max(100).optional(),
+  phone: z.string().trim().min(6).max(30).optional(),
+  promoCode: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(2)
+    .max(100)
+    .regex(/^[a-z0-9_-]+$/)
+    .optional(),
+  sourceCode: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(2)
+    .max(100)
+    .regex(/^[a-z0-9_-]+$/)
+    .optional(),
   initData: z.string().min(1).optional(),
 })
 
