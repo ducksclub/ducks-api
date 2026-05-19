@@ -12,14 +12,28 @@ export const listPromoLinks = async (_req: Request, res: Response) => {
   res.json(await service.list())
 }
 
+export const getPromoLink = async (req: Request, res: Response) => {
+  res.json(await service.get(String(req.params.id)))
+}
+
 export const updatePromoLink = async (req: Request, res: Response) => {
   res.json(await service.update(String(req.params.id), req.body))
 }
 
 export const trackPromoClick = async (req: Request, res: Response) => {
-  res.json(await service.trackClick(req.body))
+  res.json(
+    await service.trackClick(req.body, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    }),
+  )
 }
 
 export const telegramStart = async (req: Request, res: Response) => {
-  res.json(await service.telegramStart(req.body))
+  res.json(
+    await service.telegramStart(req.body, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    }),
+  )
 }

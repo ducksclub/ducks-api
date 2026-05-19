@@ -10,7 +10,7 @@ export const registerSchema = z.object({
     .trim()
     .toLowerCase()
     .min(2)
-    .max(100)
+    .max(64)
     .regex(/^[a-z0-9_-]+$/)
     .optional(),
   sourceCode: z
@@ -18,7 +18,7 @@ export const registerSchema = z.object({
     .trim()
     .toLowerCase()
     .min(2)
-    .max(100)
+    .max(64)
     .regex(/^[a-z0-9_-]+$/)
     .optional(),
   initData: z.string().min(1).optional(),
@@ -31,6 +31,22 @@ export const loginSchema = z.object({
 
 export const telegramAuthSchema = z.object({
   initData: z.string().min(1),
+  promoCode: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(2)
+    .max(64)
+    .regex(/^[a-z0-9_-]+$/)
+    .optional(),
+  sourceCode: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(2)
+    .max(64)
+    .regex(/^[a-z0-9_-]+$/)
+    .optional(),
 })
 
 export const telegramUserSchema = z.object({

@@ -64,7 +64,7 @@ export const telegramAuth = async (req: Request, res: Response) => {
   }
 
   const telegramUser = JSON.parse(decodeURIComponent(userRaw))
-  const data = await service.telegramLogin(telegramUser)
+  const data = await service.telegramLogin(telegramUser, req.body.promoCode ?? req.body.sourceCode ?? null)
 
   return res.json(data)
 }

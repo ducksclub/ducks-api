@@ -6,6 +6,7 @@ import { Roles } from '../../common/types/domain.js'
 import { asyncHandler } from '../../common/utils/async-handler.js'
 import {
   createPromoLink,
+  getPromoLink,
   listPromoLinks,
   telegramStart,
   trackPromoClick,
@@ -26,6 +27,11 @@ adminPromoLinksRouter.use(authenticate, authorize(Roles.admin))
 
 adminPromoLinksRouter.post('/', validate({ body: createPromoLinkSchema }), asyncHandler(createPromoLink))
 adminPromoLinksRouter.get('/', asyncHandler(listPromoLinks))
+adminPromoLinksRouter.get(
+  '/:id',
+  validate({ params: promoLinkIdParamsSchema }),
+  asyncHandler(getPromoLink),
+)
 adminPromoLinksRouter.patch(
   '/:id',
   validate({ params: promoLinkIdParamsSchema, body: updatePromoLinkSchema }),

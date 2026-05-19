@@ -13,6 +13,7 @@ const publicUserSelect = {
   name: true,
   phone: true,
   sourceCode: true,
+  sourceType: true,
   promoLinkId: true,
   role: true,
   createdAt: true,
@@ -48,6 +49,7 @@ export class AuthService {
           role: Roles.user,
           promoLinkId: promoLink?.id ?? null,
           sourceCode: promoLink?.code ?? null,
+          sourceType: promoLink?.type ?? null,
         },
         select: publicUserSelect,
       })
@@ -77,6 +79,7 @@ export class AuthService {
       name: user.name,
       phone: user.phone,
       sourceCode: user.sourceCode,
+      sourceType: user.sourceType,
       promoLinkId: user.promoLinkId,
       role: user.role,
       createdAt: user.createdAt,
@@ -89,8 +92,9 @@ export class AuthService {
     }
   }
 
-  async telegramLogin(telegramUser: TelegramUserDto) {
+  async telegramLogin(telegramUser: TelegramUserDto, promoCode?: string | null) {
     const telegramId = String(telegramUser.id)
+    const promoLinkService = new PromoLinkService(this.prisma)
 
     let user = await this.prisma.user.findUnique({
       where: {
@@ -98,15 +102,39 @@ export class AuthService {
       },
     })
 
+    if (user && !user.promoLinkId && !user.sourceCode && !user.sourceType) {
+      const userId = user.id
+      await this.prisma.$transaction(async (tx) => {
+        const promoLink = await promoLinkService.findActivePromoForRegistration(
+          tx,
+          promoCode,
+          telegramId,
+        )
+
+        if (promoLink) {
+          await promoLinkService.attachPromoToExistingUser(tx, userId, promoLink)
+        }
+      })
+
+      user = await this.prisma.user.findUnique({
+        where: {
+          telegramId: telegramId,
+        },
+      })
+    }
+
     /**
      * привязка телеграм аккаунта
      */
     if (!user) {
-      const promoLinkService = new PromoLinkService(this.prisma)
       const passwordHash = await hashPassword('telegram-password')
 
       user = await this.prisma.$transaction(async (tx) => {
-        const promoLink = await promoLinkService.findActivePromoForRegistration(tx, null, telegramId)
+        const promoLink = await promoLinkService.findActivePromoForRegistration(
+          tx,
+          promoCode,
+          telegramId,
+        )
 
         const createdUser = await tx.user.create({
           data: {
@@ -116,6 +144,7 @@ export class AuthService {
             passwordHash,
             promoLinkId: promoLink?.id ?? null,
             sourceCode: promoLink?.code ?? null,
+            sourceType: promoLink?.type ?? null,
           },
         })
 

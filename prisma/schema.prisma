@@ -6,6 +6,12 @@ datasource db {
   provider = "sqlite"
 }
 
+enum PromoLinkType {
+  TELEGRAM_BOT
+  TELEGRAM_MINI_APP
+  PUBLIC_SITE
+}
+
 model User {
   id            String              @id @default(cuid())
   avatarUrl     String?
@@ -18,6 +24,7 @@ model User {
   telegramId    String?             @unique
   promoLinkId   String?
   sourceCode    String?
+  sourceType    PromoLinkType?
   role          String              @default("user")
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
@@ -29,12 +36,16 @@ model User {
   @@index([role])
   @@index([promoLinkId])
   @@index([sourceCode])
+  @@index([sourceType])
 }
 
 model PromoLink {
   id                 String              @id @default(cuid())
   name               String
   code               String              @unique
+  type               PromoLinkType       @default(PUBLIC_SITE)
+  targetUrl          String?
+  generatedUrl       String?
   clicksCount        Int                 @default(0)
   registrationsCount Int                 @default(0)
   isActive           Boolean             @default(true)
@@ -42,7 +53,9 @@ model PromoLink {
   updatedAt          DateTime            @updatedAt
   users              User[]
   startSessions      PromoStartSession[]
+  clicks             PromoClick[]
 
+  @@index([type])
   @@index([isActive])
   @@index([createdAt])
 }
@@ -52,12 +65,32 @@ model PromoStartSession {
   telegramUserId String     @unique
   promoCode      String
   promoLinkId    String?
+  type           PromoLinkType @default(PUBLIC_SITE)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   promoLink      PromoLink? @relation(fields: [promoLinkId], references: [id], onDelete: SetNull)
 
   @@index([promoCode])
   @@index([promoLinkId])
+  @@index([type])
+}
+
+model PromoClick {
+  id             String        @id @default(cuid())
+  promoLinkId    String
+  code           String
+  type           PromoLinkType
+  telegramUserId String?
+  ip             String?
+  userAgent      String?
+  createdAt      DateTime      @default(now())
+  promoLink      PromoLink     @relation(fields: [promoLinkId], references: [id], onDelete: Cascade)
+
+  @@index([promoLinkId])
+  @@index([code])
+  @@index([type])
+  @@index([telegramUserId])
+  @@index([createdAt])
 }
 
 model Event {

@@ -26,6 +26,7 @@ export class UsersService {
         phone: true,
         promoLinkId: true,
         sourceCode: true,
+        sourceType: true,
         username: true,
         createdAt: true,
         updatedAt: true,
@@ -60,6 +61,7 @@ export class UsersService {
         phone: true,
         promoLinkId: true,
         sourceCode: true,
+        sourceType: true,
         username: true,
         createdAt: true,
         updatedAt: true,
@@ -89,7 +91,7 @@ export class UsersService {
     const user = await this.prisma.$transaction(async (tx) => {
       const existing = await tx.user.findUnique({
         where: { telegramId },
-        select: { id: true, promoLinkId: true, sourceCode: true },
+        select: { id: true, promoLinkId: true, sourceCode: true, sourceType: true },
       })
 
       const promoLink = await promoLinkService.findActivePromoForRegistration(
@@ -99,7 +101,7 @@ export class UsersService {
       )
 
       if (existing) {
-        if (promoLink && !existing.promoLinkId && !existing.sourceCode) {
+        if (promoLink && !existing.promoLinkId && !existing.sourceCode && !existing.sourceType) {
           await promoLinkService.attachPromoToExistingUser(tx, existing.id, promoLink)
         }
 
@@ -125,6 +127,7 @@ export class UsersService {
           passwordHash: 'telegram-auth',
           promoLinkId: promoLink?.id ?? null,
           sourceCode: promoLink?.code ?? null,
+          sourceType: promoLink?.type ?? null,
         },
       })
 
