@@ -14,7 +14,14 @@ export class RatingsService {
         ...getPagination(query),
         orderBy: [{ points: 'desc' }, { updatedAt: 'asc' }],
         include: {
-          user: { select: { id: true, email: true, name: true, username: true, avatarUrl: true } },
+          user: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              avatarUrl: true,
+            },
+          },
         },
       }),
       this.prisma.rating.count({ where: { gameType } }),

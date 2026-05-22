@@ -13,7 +13,9 @@ vi.mock('../../src/common/utils/jwt.js', () => ({
 
 describe('AuthService', () => {
   const prisma = {
-    $transaction: vi.fn(async (callback: (tx: typeof prisma) => Promise<unknown>) => callback(prisma)),
+    $transaction: vi.fn(async (callback: (tx: typeof prisma) => Promise<unknown>) =>
+      callback(prisma),
+    ),
     user: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -37,7 +39,6 @@ describe('AuthService', () => {
     prisma.user.create.mockResolvedValue({
       id: 'user-1',
       email: 'user@example.com',
-      name: 'User',
       phone: null,
       sourceCode: null,
       promoLinkId: null,
@@ -49,7 +50,6 @@ describe('AuthService', () => {
     const result = await new AuthService(prisma as never).register({
       email: 'user@example.com',
       password: 'Valid12345!',
-      name: 'User',
     })
 
     expect(result.token).toBe('jwt-token')

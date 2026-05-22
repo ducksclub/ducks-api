@@ -38,7 +38,6 @@ async function main() {
     update: {},
     create: {
       email: 'admin@ducks.com',
-      name: 'Club Admin',
       role: 'admin',
       username: 'admin',
       phone: '+77777777777',
@@ -53,7 +52,6 @@ async function main() {
     update: {},
     create: {
       email: 'user@ducks.com',
-      name: 'Test User',
       role: 'user',
       username: 'testuser',
       phone: '+77770000000',
@@ -72,7 +70,6 @@ async function main() {
         update: {},
         create: {
           email: `poker${number}@ducks.com`,
-          name: `Poker Player ${number}`,
           role: 'user',
           username: `poker_player_${number}`,
           phone: `+777700000${String(number).padStart(2, '0')}`,

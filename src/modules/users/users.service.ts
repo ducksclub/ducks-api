@@ -5,7 +5,7 @@ import { PromoLinkService } from '../promo-links/promo-link.service'
 
 export type CreateUserDto = {
   telegramId: string
-  name?: string | null
+  username?: string | null
   promoCode?: string | null
   sourceCode?: string | null
 }
@@ -21,7 +21,6 @@ export class UsersService {
         avatarUrl: true,
         telegramId: true,
         email: true,
-        name: true,
         role: true,
         phone: true,
         promoLinkId: true,
@@ -40,7 +39,6 @@ export class UsersService {
   async updateProfile(dto: UpdateProfileDto, userId: string) {
     const data = Object.fromEntries(
       Object.entries({
-        name: dto.name,
         phone: dto.phone,
         username: dto.username,
         avatarUrl: dto.avatarUrl,
@@ -56,7 +54,6 @@ export class UsersService {
         avatarUrl: true,
         telegramId: true,
         email: true,
-        name: true,
         role: true,
         phone: true,
         promoLinkId: true,
@@ -84,7 +81,7 @@ export class UsersService {
   }
 
   async createUserService(data: CreateUserDto) {
-    const { telegramId, name } = data
+    const { telegramId, username } = data
     const promoLinkService = new PromoLinkService(this.prisma)
     const explicitPromoCode = data.promoCode ?? data.sourceCode ?? null
 
@@ -108,7 +105,7 @@ export class UsersService {
         return tx.user.update({
           where: { telegramId },
           data: {
-            ...(name ? { name } : {}),
+            ...(username ? { username } : {}),
           },
         })
       }
@@ -116,14 +113,8 @@ export class UsersService {
       const createdUser = await tx.user.create({
         data: {
           telegramId,
-          name: name ?? null,
-          username: telegramId,
-
-          /**
-           * system email for telegram-only users
-           */
+          username: username ?? null,
           email: `tg_${telegramId}@duck.local`,
-
           passwordHash: 'telegram-auth',
           promoLinkId: promoLink?.id ?? null,
           sourceCode: promoLink?.code ?? null,

@@ -10,7 +10,6 @@ import { PromoLinkService } from '../promo-links/promo-link.service.js'
 const publicUserSelect = {
   id: true,
   email: true,
-  name: true,
   phone: true,
   sourceCode: true,
   sourceType: true,
@@ -43,7 +42,6 @@ export class AuthService {
         data: {
           telegramId,
           email: dto.email,
-          name: dto.name ?? null,
           phone: dto.phone ?? null,
           passwordHash,
           role: Roles.user,
@@ -76,7 +74,6 @@ export class AuthService {
     const publicUser = {
       id: user.id,
       email: user.email,
-      name: user.name,
       phone: user.phone,
       sourceCode: user.sourceCode,
       sourceType: user.sourceType,
@@ -139,7 +136,7 @@ export class AuthService {
         const createdUser = await tx.user.create({
           data: {
             telegramId: telegramId,
-            name: telegramUser.first_name,
+            username: telegramUser.first_name,
             email: `tg_${telegramId}@telegram.local`,
             passwordHash,
             promoLinkId: promoLink?.id ?? null,

@@ -1,11 +1,6 @@
 import { z } from 'zod'
 
 export const updateProfileSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, 'Имя должно содержать минимум 2 символа')
-    .max(50, 'Имя слишком длинное'),
   phone: z.string().trim().min(6, 'Введите корректный номер телефона'),
   username: z
     .string()
