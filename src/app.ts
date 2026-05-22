@@ -3,9 +3,12 @@ import cors from 'cors'
 import express from 'express'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import path from 'path'
+
 import { env } from './config/env.js'
 import { errorHandler } from './common/middleware/error-handler.js'
 import { apiRateLimiter } from './common/middleware/rate-limit.js'
+
 import { authRouter } from './modules/auth/auth.routes.js'
 import { botRouter } from './modules/bot/bot.routes.js'
 import { contentRouter } from './modules/content/content.routes.js'
@@ -19,19 +22,25 @@ import {
   adminPromoLinksRouter,
   publicPromoLinksRouter,
 } from './modules/promo-links/promo-link.routes.js'
-import path from 'path'
+import { corsOptions } from './common/utils/cors.js'
 
 export const app = express()
 
-// app.use(helmet())
-app.use(helmet({ crossOriginResourcePolicy: false }))
-app.use(cors({ origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN }))
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  }),
+)
+app.use(cors(corsOptions))
+app.options(/.*/, cors(corsOptions))
 app.use(compression())
 app.use(express.json({ limit: '1mb' }))
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 app.use(apiRateLimiter)
 
-app.get('/health', (_req, res) => res.json({ status: 'ok' }))
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok' })
+})
 app.use(
   '/uploads',
   express.static(path.join(process.cwd(), 'uploads'), {
@@ -54,7 +63,13 @@ app.use('/api/promo-links', publicPromoLinksRouter)
 app.use('/admin/promo-links', adminPromoLinksRouter)
 app.use('/promo-links', publicPromoLinksRouter)
 
-app.use((_req, res) =>
-  res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } }),
-)
+app.use((_req, res) => {
+  res.status(404).json({
+    error: {
+      code: 'NOT_FOUND',
+      message: 'Route not found',
+    },
+  })
+})
+
 app.use(errorHandler)
