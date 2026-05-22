@@ -25,8 +25,125 @@ const hashPassword = (password: string) => {
   return bcrypt.hash(password, env.BCRYPT_ROUNDS)
 }
 
+const addDays = (days: number) => {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+}
+
 async function main() {
   console.log('🌱 Seeding database...')
+
+  /**
+   * PROMO LINKS
+   */
+  const telegramPromo = await prisma.promoLink.upsert({
+    where: {
+      code: 'telegram-main',
+    },
+    update: {
+      name: 'Telegram Main Promo',
+      type: 'TELEGRAM_BOT',
+      targetUrl: 'https://t.me/ducks_club_bot',
+      generatedUrl: 'https://t.me/ducks_club_bot?start=telegram-main',
+      isActive: true,
+    },
+    create: {
+      name: 'Telegram Main Promo',
+      code: 'telegram-main',
+      type: 'TELEGRAM_BOT',
+      targetUrl: 'https://t.me/ducks_club_bot',
+      generatedUrl: 'https://t.me/ducks_club_bot?start=telegram-main',
+      clicksCount: 3,
+      registrationsCount: 2,
+      isActive: true,
+    },
+  })
+
+  const publicPromo = await prisma.promoLink.upsert({
+    where: {
+      code: 'public-site',
+    },
+    update: {
+      name: 'Public Site Promo',
+      type: 'PUBLIC_SITE',
+      targetUrl: 'https://ducksclub.space',
+      generatedUrl: 'https://ducksclub.space?source=public-site',
+      isActive: true,
+    },
+    create: {
+      name: 'Public Site Promo',
+      code: 'public-site',
+      type: 'PUBLIC_SITE',
+      targetUrl: 'https://ducksclub.space',
+      generatedUrl: 'https://ducksclub.space?source=public-site',
+      clicksCount: 5,
+      registrationsCount: 1,
+      isActive: true,
+    },
+  })
+
+  /**
+   * PROMO SESSIONS / CLICKS
+   */
+  await prisma.promoStartSession.upsert({
+    where: {
+      telegramUserId: '100001',
+    },
+    update: {
+      promoCode: telegramPromo.code,
+      promoLinkId: telegramPromo.id,
+      type: 'TELEGRAM_BOT',
+    },
+    create: {
+      telegramUserId: '100001',
+      promoCode: telegramPromo.code,
+      promoLinkId: telegramPromo.id,
+      type: 'TELEGRAM_BOT',
+    },
+  })
+
+  await prisma.promoClick.upsert({
+    where: {
+      id: 'seed-promo-click-telegram-1',
+    },
+    update: {
+      promoLinkId: telegramPromo.id,
+      code: telegramPromo.code,
+      type: 'TELEGRAM_BOT',
+      telegramUserId: '100001',
+      ip: '127.0.0.1',
+      userAgent: 'Seed Bot',
+    },
+    create: {
+      id: 'seed-promo-click-telegram-1',
+      promoLinkId: telegramPromo.id,
+      code: telegramPromo.code,
+      type: 'TELEGRAM_BOT',
+      telegramUserId: '100001',
+      ip: '127.0.0.1',
+      userAgent: 'Seed Bot',
+    },
+  })
+
+  await prisma.promoClick.upsert({
+    where: {
+      id: 'seed-promo-click-public-1',
+    },
+    update: {
+      promoLinkId: publicPromo.id,
+      code: publicPromo.code,
+      type: 'PUBLIC_SITE',
+      ip: '127.0.0.1',
+      userAgent: 'Seed Browser',
+    },
+    create: {
+      id: 'seed-promo-click-public-1',
+      promoLinkId: publicPromo.id,
+      code: publicPromo.code,
+      type: 'PUBLIC_SITE',
+      ip: '127.0.0.1',
+      userAgent: 'Seed Browser',
+    },
+  })
 
   /**
    * USERS
@@ -35,7 +152,11 @@ async function main() {
     where: {
       email: 'admin@ducks.com',
     },
-    update: {},
+    update: {
+      role: 'admin',
+      username: 'admin',
+      phone: '+77777777777',
+    },
     create: {
       email: 'admin@ducks.com',
       role: 'admin',
@@ -49,30 +170,70 @@ async function main() {
     where: {
       email: 'user@ducks.com',
     },
-    update: {},
+    update: {
+      role: 'user',
+      username: 'testuser',
+      phone: '+77770000000',
+      promoLinkId: publicPromo.id,
+      sourceCode: publicPromo.code,
+      sourceType: 'PUBLIC_SITE',
+    },
     create: {
       email: 'user@ducks.com',
       role: 'user',
       username: 'testuser',
       phone: '+77770000000',
       passwordHash: await hashPassword('User12345!'),
+      promoLinkId: publicPromo.id,
+      sourceCode: publicPromo.code,
+      sourceType: 'PUBLIC_SITE',
     },
   })
 
-  const pokerUsers = await Promise.all(
+  const telegramUser = await prisma.user.upsert({
+    where: {
+      email: 'telegram@ducks.com',
+    },
+    update: {
+      role: 'user',
+      username: 'telegram_user',
+      phone: '+77770000001',
+      telegramId: '100001',
+      promoLinkId: telegramPromo.id,
+      sourceCode: telegramPromo.code,
+      sourceType: 'TELEGRAM_BOT',
+    },
+    create: {
+      email: 'telegram@ducks.com',
+      role: 'user',
+      username: 'telegram_user',
+      phone: '+77770000001',
+      telegramId: '100001',
+      passwordHash: await hashPassword('User12345!'),
+      promoLinkId: telegramPromo.id,
+      sourceCode: telegramPromo.code,
+      sourceType: 'TELEGRAM_BOT',
+    },
+  })
+
+  const players = await Promise.all(
     Array.from({ length: 10 }).map(async (_, index) => {
       const number = index + 1
 
       return prisma.user.upsert({
         where: {
-          email: `poker${number}@ducks.com`,
+          email: `player${number}@ducks.com`,
         },
-        update: {},
-        create: {
-          email: `poker${number}@ducks.com`,
+        update: {
           role: 'user',
-          username: `poker_player_${number}`,
-          phone: `+777700000${String(number).padStart(2, '0')}`,
+          username: `player_${number}`,
+          phone: `+777700001${String(number).padStart(2, '0')}`,
+        },
+        create: {
+          email: `player${number}@ducks.com`,
+          role: 'user',
+          username: `player_${number}`,
+          phone: `+777700001${String(number).padStart(2, '0')}`,
           passwordHash: await hashPassword('User12345!'),
         },
       })
@@ -81,29 +242,39 @@ async function main() {
 
   /**
    * EVENTS
-   *
-   * participantLimit = 10
-   * seatsPerTable = 9
-   *
-   * Всего мы ниже регистрируем 11 пользователей.
-   * Поэтому:
-   * - первые 10 будут PARTICIPANT
-   * - 11-й будет WAITING
    */
-  const event = await prisma.event.create({
-    data: {
-      title: 'Poker Test Event',
+  const pokerEvent = await prisma.event.upsert({
+    where: {
+      id: 'seed-event-poker-main',
+    },
+    update: {
+      title: 'Poker Night',
       city: 'Astana',
-      address: 'Arena Duck Club',
-      features: 'Poker tables, automatic seating, waiting list',
-      gameRules: 'No toxicity, fair play',
-      gameType: 'poker',
-      startsAt: new Date(Date.now() + 86400000), // +1 day
-      endsAt: new Date(Date.now() + 90000000),
-
+      address: 'Duck’s Club Arena',
+      features: 'Покерные столы, рассадка игроков, waiting list',
+      gameRules: 'Играем честно, без токсичности, уважительно к игрокам',
+      gameType: 'Покер',
+      startsAt: addDays(1),
+      endsAt: addDays(1.15),
       participantLimit: 10,
       seatsPerTable: 9,
-
+      pointsForParticipation: 10,
+      status: 'published',
+      imageUrl: '',
+      imageHash: '',
+    },
+    create: {
+      id: 'seed-event-poker-main',
+      title: 'Poker Night',
+      city: 'Astana',
+      address: 'Duck’s Club Arena',
+      features: 'Покерные столы, рассадка игроков, waiting list',
+      gameRules: 'Играем честно, без токсичности, уважительно к игрокам',
+      gameType: 'Покер',
+      startsAt: addDays(1),
+      endsAt: addDays(1.15),
+      participantLimit: 10,
+      seatsPerTable: 9,
       pointsForParticipation: 10,
       status: 'published',
       imageUrl: '',
@@ -111,39 +282,116 @@ async function main() {
     },
   })
 
-  /**
-   * REGISTRATION
-   *
-   * Участники:
-   * 1. Test User
-   * 2-11. Poker Player 1-10
-   *
-   * Логика:
-   * - если position <= participantLimit -> PARTICIPANT
-   * - если position > participantLimit -> WAITING
-   *
-   * Распределение мест:
-   * - 1-9 игроки: стол 1, места 1-9
-   * - 10-й игрок: стол 2, место 1
-   * - 11-й игрок: WAITING, без места
-   */
-  const allPokerParticipants = [user, ...pokerUsers]
+  const billiardEvent = await prisma.event.upsert({
+    where: {
+      id: 'seed-event-billiard-main',
+    },
+    update: {
+      title: 'Billiard Evening',
+      city: 'Astana',
+      address: 'Duck’s Club Billiard Zone',
+      features: 'Бильярдные столы, турнирная сетка, friendly format',
+      gameRules: 'Соблюдать очередь и правила клуба',
+      gameType: 'Бильярд',
+      startsAt: addDays(2),
+      endsAt: addDays(2.1),
+      participantLimit: 8,
+      seatsPerTable: 2,
+      pointsForParticipation: 8,
+      status: 'published',
+      imageUrl: '',
+      imageHash: '',
+    },
+    create: {
+      id: 'seed-event-billiard-main',
+      title: 'Billiard Evening',
+      city: 'Astana',
+      address: 'Duck’s Club Billiard Zone',
+      features: 'Бильярдные столы, турнирная сетка, friendly format',
+      gameRules: 'Соблюдать очередь и правила клуба',
+      gameType: 'Бильярд',
+      startsAt: addDays(2),
+      endsAt: addDays(2.1),
+      participantLimit: 8,
+      seatsPerTable: 2,
+      pointsForParticipation: 8,
+      status: 'published',
+      imageUrl: '',
+      imageHash: '',
+    },
+  })
 
-  for (let index = 0; index < allPokerParticipants.length; index++) {
-    const participant: any = allPokerParticipants[index]
+  const dartsEvent = await prisma.event.upsert({
+    where: {
+      id: 'seed-event-darts-main',
+    },
+    update: {
+      title: 'Darts Challenge',
+      city: 'Astana',
+      address: 'Duck’s Club Darts Area',
+      features: 'Дартс-зона, casual format, быстрые раунды',
+      gameRules: 'Один игрок — одна попытка за раунд',
+      gameType: 'Дартс',
+      startsAt: addDays(3),
+      endsAt: addDays(3.08),
+      participantLimit: 12,
+      seatsPerTable: 4,
+      pointsForParticipation: 6,
+      status: 'published',
+      imageUrl: '',
+      imageHash: '',
+    },
+    create: {
+      id: 'seed-event-darts-main',
+      title: 'Darts Challenge',
+      city: 'Astana',
+      address: 'Duck’s Club Darts Area',
+      features: 'Дартс-зона, casual format, быстрые раунды',
+      gameRules: 'Один игрок — одна попытка за раунд',
+      gameType: 'Дартс',
+      startsAt: addDays(3),
+      endsAt: addDays(3.08),
+      participantLimit: 12,
+      seatsPerTable: 4,
+      pointsForParticipation: 6,
+      status: 'published',
+      imageUrl: '',
+      imageHash: '',
+    },
+  })
+
+  /**
+   * EVENT REGISTRATIONS
+   */
+  const pokerParticipants = [user, telegramUser, ...players]
+
+  for (let index = 0; index < pokerParticipants.length; index++) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const participant = pokerParticipants[index] as any
     const position = index + 1
 
-    const isRegistered = position <= event.participantLimit
+    const isParticipant = position <= pokerEvent.participantLimit
+    const tableNumber = isParticipant ? Math.ceil(position / pokerEvent.seatsPerTable) : null
+    const seatNumber = isParticipant ? ((position - 1) % pokerEvent.seatsPerTable) + 1 : null
 
-    const tableNumber = isRegistered ? Math.ceil(position / event.seatsPerTable) : null
-
-    const seatNumber = isRegistered ? ((position - 1) % event.seatsPerTable) + 1 : null
-
-    await prisma.eventRegistration.create({
-      data: {
+    await prisma.eventRegistration.upsert({
+      where: {
+        userId_eventId: {
+          userId: participant.id,
+          eventId: pokerEvent.id,
+        },
+      },
+      update: {
+        status: isParticipant ? 'PARTICIPANT' : 'WAITING',
+        position,
+        tableNumber,
+        seatNumber,
+        cancelledAt: null,
+      },
+      create: {
         userId: participant.id,
-        eventId: event.id,
-        status: isRegistered ? 'PARTICIPANT' : 'WAITING',
+        eventId: pokerEvent.id,
+        status: isParticipant ? 'PARTICIPANT' : 'WAITING',
         position,
         tableNumber,
         seatNumber,
@@ -151,57 +399,172 @@ async function main() {
     })
   }
 
-  /**
-   * RATINGS
-   */
-  await prisma.rating.upsert({
+  await prisma.eventRegistration.upsert({
     where: {
-      userId_gameType: {
+      userId_eventId: {
         userId: user.id,
-        gameType: 'poker',
+        eventId: billiardEvent.id,
       },
     },
-    update: {},
+    update: {
+      status: 'PARTICIPANT',
+      position: 1,
+      tableNumber: 1,
+      seatNumber: 1,
+      cancelledAt: null,
+    },
     create: {
       userId: user.id,
-      gameType: 'poker',
-      points: 1200,
+      eventId: billiardEvent.id,
+      status: 'PARTICIPANT',
+      position: 1,
+      tableNumber: 1,
+      seatNumber: 1,
     },
   })
 
-  await prisma.rating.upsert({
+  await prisma.eventRegistration.upsert({
     where: {
-      userId_gameType: {
-        userId: user.id,
-        gameType: 'poker',
+      userId_eventId: {
+        userId: telegramUser.id,
+        eventId: dartsEvent.id,
       },
     },
-    update: {},
+    update: {
+      status: 'PARTICIPANT',
+      position: 1,
+      tableNumber: 1,
+      seatNumber: 1,
+      cancelledAt: null,
+    },
     create: {
-      userId: user.id,
-      gameType: 'poker',
-      points: 500,
+      userId: telegramUser.id,
+      eventId: dartsEvent.id,
+      status: 'PARTICIPANT',
+      position: 1,
+      tableNumber: 1,
+      seatNumber: 1,
     },
   })
+
+  /**
+   * RATINGS
+   */
+  const ratingSeeds = [
+    {
+      userId: user.id,
+      gameType: 'Покер',
+      points: 1200,
+    },
+    {
+      userId: user.id,
+      gameType: 'Бильярд',
+      points: 430,
+    },
+    {
+      userId: user.id,
+      gameType: 'Дартс',
+      points: 270,
+    },
+    {
+      userId: telegramUser.id,
+      gameType: 'Покер',
+      points: 980,
+    },
+    {
+      userId: telegramUser.id,
+      gameType: 'Дартс',
+      points: 760,
+    },
+    ...players.map((player, index) => ({
+      userId: player.id,
+      gameType: 'Покер',
+      points: 900 - index * 45,
+    })),
+  ]
+
+  for (const rating of ratingSeeds) {
+    await prisma.rating.upsert({
+      where: {
+        userId_gameType: {
+          userId: rating.userId,
+          gameType: rating.gameType,
+        },
+      },
+      update: {
+        points: rating.points,
+      },
+      create: rating,
+    })
+  }
 
   /**
    * FEEDBACK
    */
-  await prisma.feedback.create({
-    data: {
+  await prisma.feedback.upsert({
+    where: {
+      id: 'seed-feedback-user-1',
+    },
+    update: {
+      userId: user.id,
+      message: 'Очень классный клуб, всё нравится 🔥',
+    },
+    create: {
+      id: 'seed-feedback-user-1',
       userId: user.id,
       message: 'Очень классный клуб, всё нравится 🔥',
     },
   })
 
+  await prisma.feedback.upsert({
+    where: {
+      id: 'seed-feedback-telegram-1',
+    },
+    update: {
+      userId: telegramUser.id,
+      message: 'Удобная запись через Telegram Mini App.',
+    },
+    create: {
+      id: 'seed-feedback-telegram-1',
+      userId: telegramUser.id,
+      message: 'Удобная запись через Telegram Mini App.',
+    },
+  })
+
   /**
-   * CONTENT PAGE
+   * CONTENT PAGES
    */
-  await prisma.contentPage.create({
-    data: {
+  await prisma.contentPage.upsert({
+    where: {
+      id: 'seed-content-rules',
+    },
+    update: {
       key: 'rules',
       title: 'Правила клуба',
-      body: '1. Уважай игроков\n2. Без токсичности\n3. Играем честно',
+      body: '1. Уважай игроков\n2. Без токсичности\n3. Играем честно\n4. Соблюдай регламент события',
+    },
+    create: {
+      id: 'seed-content-rules',
+      key: 'rules',
+      title: 'Правила клуба',
+      body: '1. Уважай игроков\n2. Без токсичности\n3. Играем честно\n4. Соблюдай регламент события',
+    },
+  })
+
+  await prisma.contentPage.upsert({
+    where: {
+      id: 'seed-content-poker-levels',
+    },
+    update: {
+      key: 'POKER_LEVELS',
+      title: 'Курс обучения покеру',
+      body: 'BASE — основы игры\nMIDDLE — стратегия и позиция\nADVANCED — диапазоны и математика\nPROFI — турнирное мышление',
+    },
+    create: {
+      id: 'seed-content-poker-levels',
+      key: 'POKER_LEVELS',
+      title: 'Курс обучения покеру',
+      body: 'BASE — основы игры\nMIDDLE — стратегия и позиция\nADVANCED — диапазоны и математика\nPROFI — турнирное мышление',
     },
   })
 
@@ -211,27 +574,22 @@ async function main() {
   console.log('email: admin@ducks.com')
   console.log('password: Admin12345!')
   console.log('')
-  console.log('Test User:')
+  console.log('User:')
   console.log('email: user@ducks.com')
   console.log('password: User12345!')
   console.log('')
-  console.log('Poker users:')
-  console.log('email: poker1@ducks.com - poker10@ducks.com')
+  console.log('Telegram user:')
+  console.log('email: telegram@ducks.com')
   console.log('password: User12345!')
   console.log('')
-  console.log('Poker Event:')
-  console.log(`title: ${event.title}`)
-  console.log(`participantLimit: ${event.participantLimit}`)
-  console.log(`seatsPerTable: ${event.seatsPerTable}`)
-  console.log('')
-  console.log('Expected registrations:')
-  console.log('1-10 -> PARTICIPANT')
-  console.log('11 -> WAITING')
+  console.log(`Created/updated users: ${players.length + 3}`)
+  console.log(`Created/updated events: 3`)
+  console.log(`Poker participants: ${pokerParticipants.length}`)
 }
 
 main()
-  .catch((e) => {
-    console.error('❌ Seed error:', e)
+  .catch((error) => {
+    console.error('❌ Seed error:', error)
     process.exit(1)
   })
   .finally(async () => {
