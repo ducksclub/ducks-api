@@ -19,7 +19,6 @@ model User {
   email         String              @unique
   passwordHash  String
   username      String?             @unique
-  name          String?
   phone         String?
   telegramId    String?             @unique
   promoLinkId   String?
@@ -61,14 +60,14 @@ model PromoLink {
 }
 
 model PromoStartSession {
-  id             String     @id @default(cuid())
-  telegramUserId String     @unique
+  id             String        @id @default(cuid())
+  telegramUserId String        @unique
   promoCode      String
   promoLinkId    String?
   type           PromoLinkType @default(PUBLIC_SITE)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  promoLink      PromoLink? @relation(fields: [promoLinkId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  promoLink      PromoLink?    @relation(fields: [promoLinkId], references: [id], onDelete: SetNull)
 
   @@index([promoCode])
   @@index([promoLinkId])
