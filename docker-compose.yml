@@ -11,13 +11,13 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
-      DATABASE_URL: file:./dev.db
+      DATABASE_URL: "file:/app/data/ducks.db"
     ports:
       - "4000:4000"
     volumes:
-      - ducks_gameclub_prisma:/app/prisma
+      - ducks_gameclub_data:/app/data
       - ducks_gameclub_uploads:/app/uploads
 
 volumes:
-  ducks_gameclub_prisma:
+  ducks_gameclub_data:
   ducks_gameclub_uploads:

@@ -15,8 +15,7 @@ RUN npm ci
 FROM deps AS build
 WORKDIR /app
 
-ARG DATABASE_URL="file:./dev.db"
-ENV DATABASE_URL=${DATABASE_URL}
+ENV DATABASE_URL="file:/app/data/ducks.db"
 
 COPY tsconfig.json ./
 COPY src ./src
@@ -27,7 +26,6 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=4000
-ENV DATABASE_URL="file:/app/data/ducks.db"
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates openssl \
