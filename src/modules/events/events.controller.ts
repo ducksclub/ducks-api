@@ -16,6 +16,11 @@ export const listEvents = async (req: Request, res: Response) => {
   res.json(data)
 }
 
+export const listTemplates = async (req: Request, res: Response) => {
+  const data = await service.listTemplates(req.query as never)
+  res.json(data)
+}
+
 export const listMyEvents = async (req: Request, res: Response) => {
   const userId = req.user?.id
   if (!userId) throw unauthorized()

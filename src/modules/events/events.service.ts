@@ -92,7 +92,36 @@ export class EventsService {
       this.prisma.event.count({ where }),
     ])
 
-    return paginated(events.map((event) => this.withPokerSeatLayout(event)), total, pagination)
+    return paginated(
+      events.map((event) => this.withPokerSeatLayout(event)),
+      total,
+      pagination,
+    )
+  }
+
+  async listTemplates(query: EventListQuery) {
+    const where: Prisma.EventWhereInput = {
+      isTemplate: true,
+    }
+
+    if (query.gameType) where.gameType = query.gameType
+    if (query.status) where.status = query.status
+
+    const pagination = {
+      page: query.page,
+      limit: query.limit,
+    }
+
+    const [events, total] = await this.prisma.$transaction([
+      this.prisma.event.findMany({
+        where,
+        ...getPagination(pagination),
+        orderBy: { startsAt: 'asc' },
+      }),
+      this.prisma.event.count({ where }),
+    ])
+
+    return paginated(events, total, pagination)
   }
 
   async listMy(query: EventListQuery, userId: string) {
@@ -100,7 +129,6 @@ export class EventsService {
       ...(query.gameType && {
         gameType: query.gameType,
       }),
-
       ...(query.status && {
         status: query.status,
       }),
@@ -123,13 +151,10 @@ export class EventsService {
     const [events, total] = await this.prisma.$transaction([
       this.prisma.event.findMany({
         where,
-
         ...getPagination(pagination),
-
         orderBy: {
           startsAt: 'asc',
         },
-
         include: {
           _count: {
             select: {
@@ -146,7 +171,11 @@ export class EventsService {
       this.prisma.event.count({ where }),
     ])
 
-    return paginated(events.map((event) => this.withPokerSeatLayout(event)), total, pagination)
+    return paginated(
+      events.map((event) => this.withPokerSeatLayout(event)),
+      total,
+      pagination,
+    )
   }
 
   async create(dto: CreateEventDto) {
@@ -164,6 +193,7 @@ export class EventsService {
         seatsPerTable: dto.seatsPerTable,
         pointsForParticipation: dto.pointsForParticipation,
         status: dto.status,
+        isTemplate: dto.isTemplate ?? false,
         imageUrl: dto.imageUrl ?? null,
         imageHash: dto.imageHash ?? null,
       },
@@ -249,9 +279,9 @@ export class EventsService {
     }
   }
 
-  private withPokerSeatLayout<T extends { gameType: string; participantLimit: number; seatsPerTable: number }>(
-    event: T,
-  ) {
+  private withPokerSeatLayout<
+    T extends { gameType: string; participantLimit: number; seatsPerTable: number },
+  >(event: T) {
     if (!this.isPokerEvent(event.gameType)) return event
 
     return {
@@ -281,9 +311,7 @@ export class EventsService {
     const occupied = new Set(
       registrations
         .filter(
-          (
-            registration,
-          ): registration is { tableNumber: number; seatNumber: number } =>
+          (registration): registration is { tableNumber: number; seatNumber: number } =>
             registration.tableNumber !== null && registration.seatNumber !== null,
         )
         .map((registration) => `${registration.tableNumber}:${registration.seatNumber}`),
@@ -321,7 +349,14 @@ export class EventsService {
   private async promoteNextWaitingUser(
     tx: Prisma.TransactionClient,
     eventId: string,
-    event: { title: string; startsAt: Date; address: string; gameType: string; participantLimit: number; seatsPerTable: number },
+    event: {
+      title: string
+      startsAt: Date
+      address: string
+      gameType: string
+      participantLimit: number
+      seatsPerTable: number
+    },
     preferredSeat?: { tableNumber: number | null; seatNumber: number | null },
   ) {
     const nextWaiting = await tx.eventRegistration.findFirst({
@@ -614,15 +649,10 @@ export class EventsService {
       let promotedNotification: EventRegistrationNotificationPayload | null = null
 
       if (registration.status === RegistrationStatuses.registered) {
-        const promoted = await this.promoteNextWaitingUser(
-          tx,
-          eventId,
-          event,
-          {
-            tableNumber: registration.tableNumber,
-            seatNumber: registration.seatNumber,
-          },
-        )
+        const promoted = await this.promoteNextWaitingUser(tx, eventId, event, {
+          tableNumber: registration.tableNumber,
+          seatNumber: registration.seatNumber,
+        })
 
         promotedNotification = promoted?.notification ?? null
       }
