@@ -64,7 +64,9 @@ export class EventsService {
   }
 
   async list(query: EventListQuery) {
-    const where: Prisma.EventWhereInput = {}
+    const where: Prisma.EventWhereInput = {
+      isTemplate: false,
+    }
 
     if (query.gameType) where.gameType = query.gameType
     if (query.status) where.status = query.status
