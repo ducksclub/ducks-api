@@ -16,7 +16,7 @@ export class AuthController {
 
   signUp = async (req: Request, res: Response) => {
     const telegramUser = parseTelegramWebAppUserFromInitData(req.body.initData)
-    const result = await this.service.register(req.body, telegramUser)
+    const result = await this.service.signUp(req.body, telegramUser)
 
     res.status(201).json(result)
   }
@@ -24,7 +24,7 @@ export class AuthController {
   signInWithTelegram = async (req: Request, res: Response) => {
     const telegramUser = getTelegramWebAppUserFromInitData(req.body.initData)
     const sourceCode = req.body.promoCode ?? req.body.sourceCode ?? null
-    const data = await this.service.telegramLogin(telegramUser, sourceCode)
+    const data = await this.service.signInWithTelegram(telegramUser, sourceCode)
 
     res.json(data)
   }
