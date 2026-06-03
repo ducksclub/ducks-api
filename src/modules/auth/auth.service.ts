@@ -1,87 +1,33 @@
+import { toPublicUser } from './auth.helpers'
+import { Roles } from '../../common/types/domain'
+import { AuthRepository } from './auth.repository'
+import { conflict, unauthorized } from '../../common/errors/app-error'
+import { hashPassword, verifyPassword } from '../../common/utils/password'
+import { signAccessToken } from '../../common/utils/jwt'
+import { generateToken } from '../../common/utils/telegram-auth'
+import { PromoLinkService } from '../promo-links/promo-link.service'
+import { SignInDto, SignUpDto, TelegramWebAppUserDto } from './auth.types'
+import type { Role } from '../../common/types/domain'
 import type { PrismaClient } from '@prisma/client'
-import { conflict, unauthorized } from '../../common/errors/app-error.js'
-import { Roles, type Role } from '../../common/types/domain.js'
-import { hashPassword, verifyPassword } from '../../common/utils/password.js'
-import { signAccessToken } from '../../common/utils/jwt.js'
-import type { LoginDto, RegisterDto, TelegramUserDto } from './auth.schemas.js'
-import { generateToken } from '../../common/utils/telegram-auth.js'
-import { PromoLinkService } from '../promo-links/promo-link.service.js'
-
-const publicUserSelect = {
-  id: true,
-  email: true,
-  phone: true,
-  sourceCode: true,
-  sourceType: true,
-  promoLinkId: true,
-  role: true,
-  createdAt: true,
-  updatedAt: true,
-} as const
 
 export class AuthService {
-  constructor(private readonly prisma: PrismaClient) {}
+  private readonly repository: AuthRepository
+  private readonly promoLinks: PromoLinkService
 
-  async register(dto: RegisterDto, telegramUser?: TelegramUserDto) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } })
-    if (existing) throw conflict('Email is already registered')
-
-    const promoLinkService = new PromoLinkService(this.prisma)
-    const telegramId = telegramUser?.id ? String(telegramUser.id) : null
-    const explicitPromoCode = dto.promoCode ?? dto.sourceCode ?? null
-    const passwordHash = await hashPassword(dto.password)
-
-    const user = await this.prisma.$transaction(async (tx) => {
-      const promoLink = await promoLinkService.findActivePromoForRegistration(
-        tx,
-        explicitPromoCode,
-        telegramId,
-      )
-
-      const createdUser = await tx.user.create({
-        data: {
-          telegramId,
-          email: dto.email,
-          phone: dto.phone ?? null,
-          passwordHash,
-          role: Roles.user,
-          promoLinkId: promoLink?.id ?? null,
-          sourceCode: promoLink?.code ?? null,
-          sourceType: promoLink?.type ?? null,
-        },
-        select: publicUserSelect,
-      })
-
-      if (promoLink) {
-        await promoLinkService.incrementRegistration(tx, promoLink.id)
-      }
-
-      return createdUser
-    })
-
-    return {
-      user,
-      token: signAccessToken({ id: user.id, email: user.email, role: user.role as Role }),
-    }
+  constructor(private readonly prisma: PrismaClient) {
+    this.repository = new AuthRepository(prisma)
+    this.promoLinks = new PromoLinkService(prisma)
   }
 
-  async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } })
-    if (!user || !(await verifyPassword(dto.password, user.passwordHash))) {
-      throw unauthorized('Invalid email or password')
+  async signIn(dto: SignInDto) {
+    const user = await this.repository.findByEmail(dto.email)
+    const passwordValid = user ? await verifyPassword(dto.password, user.passwordHash) : false
+
+    if (!user || !passwordValid) {
+      throw unauthorized('Неверный адрес электронной почты или пароль')
     }
 
-    const publicUser = {
-      id: user.id,
-      email: user.email,
-      phone: user.phone,
-      sourceCode: user.sourceCode,
-      sourceType: user.sourceType,
-      promoLinkId: user.promoLinkId,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    }
+    const publicUser = toPublicUser(user)
 
     return {
       user: publicUser,
@@ -89,35 +35,76 @@ export class AuthService {
     }
   }
 
-  async telegramLogin(telegramUser: TelegramUserDto, promoCode?: string | null) {
-    const telegramId = String(telegramUser.id)
-    const promoLinkService = new PromoLinkService(this.prisma)
+  async signUp(dto: SignUpDto, telegramWebAppUser?: TelegramWebAppUserDto) {
+    const existing = await this.repository.findByEmail(dto.email)
 
-    let user = await this.prisma.user.findUnique({
-      where: {
-        telegramId: telegramId,
-      },
+    if (existing) {
+      throw conflict('Адрес электронной почты уже зарегистрирован')
+    }
+
+    const telegramId = telegramWebAppUser?.id ? String(telegramWebAppUser.id) : null
+
+    const explicitPromoCode = dto.promoCode ?? dto.sourceCode ?? null
+    const passwordHash = await hashPassword(dto.password)
+
+    const user = await this.prisma.$transaction(async (tx) => {
+      const promoLink = await this.promoLinks.findActivePromoForRegistration(
+        tx,
+        explicitPromoCode,
+        telegramId,
+      )
+
+      const createdUser = await this.repository.createUser(tx, {
+        telegramId,
+        passwordHash,
+        avatarUrl: null,
+        role: Roles.user,
+        email: dto.email,
+        username: dto.username,
+        phone: dto.phone ?? null,
+        promoLinkId: promoLink?.id ?? null,
+        sourceCode: promoLink?.code ?? null,
+        sourceType: promoLink?.type ?? null,
+      })
+
+      if (promoLink) {
+        await this.promoLinks.incrementRegistration(tx, promoLink.id)
+      }
+
+      return createdUser
     })
+
+    return {
+      user,
+      token: signAccessToken({
+        id: user.id,
+        email: user.email,
+        role: user.role as Role,
+      }),
+    }
+  }
+
+  async signInWithTelegram(tgUserWebAppDto: TelegramWebAppUserDto, promoCode?: string | null) {
+    const telegramId = String(tgUserWebAppDto.id)
+
+    let user = await this.repository.findByTelegramId(telegramId)
 
     if (user && !user.promoLinkId && !user.sourceCode && !user.sourceType) {
       const userId = user.id
+
       await this.prisma.$transaction(async (tx) => {
-        const promoLink = await promoLinkService.findActivePromoForRegistration(
+        const promoLink = await this.promoLinks.findActivePromoForRegistration(
           tx,
           promoCode,
           telegramId,
         )
 
         if (promoLink) {
-          await promoLinkService.attachPromoToExistingUser(tx, userId, promoLink)
+          await this.promoLinks.attachPromoToExistingUser(tx, userId, promoLink)
         }
       })
 
-      user = await this.prisma.user.findUnique({
-        where: {
-          telegramId: telegramId,
-        },
-      })
+      user = await this.repository.findByTelegramId(telegramId)
     }
 
     /**
@@ -127,26 +114,27 @@ export class AuthService {
       const passwordHash = await hashPassword('telegram-password')
 
       user = await this.prisma.$transaction(async (tx) => {
-        const promoLink = await promoLinkService.findActivePromoForRegistration(
+        const promoLink = await this.promoLinks.findActivePromoForRegistration(
           tx,
           promoCode,
           telegramId,
         )
 
-        const createdUser = await tx.user.create({
-          data: {
-            telegramId: telegramId,
-            username: telegramUser.first_name,
-            email: `tg_${telegramId}@telegram.local`,
-            passwordHash,
-            promoLinkId: promoLink?.id ?? null,
-            sourceCode: promoLink?.code ?? null,
-            sourceType: promoLink?.type ?? null,
-          },
+        const createdUser = await this.repository.createUser(tx, {
+          telegramId,
+          passwordHash,
+          role: Roles.user,
+          username: tgUserWebAppDto.first_name ?? `tg_user_${telegramId}`,
+          email: `tg_${telegramId}@telegram.local`,
+          promoLinkId: promoLink?.id ?? null,
+          sourceCode: promoLink?.code ?? null,
+          sourceType: promoLink?.type ?? null,
+          phone: null,
+          avatarUrl: null,
         })
 
         if (promoLink) {
-          await promoLinkService.incrementRegistration(tx, promoLink.id)
+          await this.promoLinks.incrementRegistration(tx, promoLink.id)
         }
 
         return createdUser
@@ -154,8 +142,8 @@ export class AuthService {
     }
 
     const token = generateToken({
-      id: user.id,
-      role: user.role,
+      id: user!.id,
+      role: user!.role,
     })
 
     return {
