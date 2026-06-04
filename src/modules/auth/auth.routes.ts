@@ -1,11 +1,16 @@
 import { Router } from 'express'
-import { asyncHandler } from '../../common/utils/async-handler.js'
-import { validate } from '../../common/middleware/validate.js'
-import { loginSchema, registerSchema, telegramAuthSchema } from './auth.schemas.js'
-import { login, register, telegramAuth } from './auth.controller.js'
+import { AuthController } from './auth.controller'
+import { validate } from '../../common/middleware/validate'
+import { asyncHandler } from '../../common/utils/async-handler'
+import { signInSchema, signUpSchema, signInWithTelegramSchema } from './auth.schemas'
 
 export const authRouter = Router()
+export const controller = new AuthController()
 
-authRouter.post('/register', validate({ body: registerSchema }), asyncHandler(register))
-authRouter.post('/login', validate({ body: loginSchema }), asyncHandler(login))
-authRouter.post('/telegram', validate({ body: telegramAuthSchema }), asyncHandler(telegramAuth))
+authRouter.post('/signin', validate({ body: signInSchema }), asyncHandler(controller.signIn))
+authRouter.post('/signup', validate({ body: signUpSchema }), asyncHandler(controller.signUp))
+authRouter.post(
+  '/signin-with-telegram',
+  validate({ body: signInWithTelegramSchema }),
+  asyncHandler(controller.signInWithTelegram),
+)
