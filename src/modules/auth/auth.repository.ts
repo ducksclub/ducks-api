@@ -27,6 +27,7 @@ export class AuthRepository {
         role: data.role,
         email: data.email,
         phone: data.phone ?? null,
+        username: data.username,
         passwordHash: data.passwordHash,
         telegramId: data.telegramId ?? null,
         promoLinkId: data.promoLinkId ?? null,
