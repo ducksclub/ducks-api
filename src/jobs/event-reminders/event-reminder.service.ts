@@ -7,6 +7,7 @@ import { prisma } from '../../prisma/client'
 import { sendEventNotification } from '../../modules/telegram-bot/telegram-bot.api'
 import { EVENT_REMINDERS, type ReminderConfig } from './event-reminder.config'
 import { createEventReminderMessage } from './event-reminder.messages'
+import { RegistrationStatuses } from '../../common/types/domain'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -35,7 +36,7 @@ async function sendReminderByConfig(reminder: ReminderConfig) {
     include: {
       registrations: {
         where: {
-          status: 'registered',
+          status: RegistrationStatuses.registered,
         },
         include: {
           user: true,
