@@ -8,18 +8,54 @@ type EventReminderMessageData = {
   address: string
 }
 
-export function createEventReminderMessage(event: EventReminderMessageData, type: ReminderType) {
-  const titleByType: Record<ReminderType, string> = {
-    '24h': '🔔 Напоминание: событие начнётся через 24 часа',
-    '2h': '⏰ Напоминание: событие начнётся через 2 часа',
-    '15m': '🚀 Напоминание: событие начнётся через 15 минут',
-  }
+const ADDRESS_2GIS_URL = 'https://go.2gis.com/your-link'
 
-  return (
-    `${titleByType[type]}\n\n` +
-    `🎲 Событие: "${event.title}"\n` +
-    `🕒 Дата и время: ${formatDateTime(event.startsAt)}\n` +
-    `📍 Адрес: ${event.city}, ${event.address}\n\n` +
-    `🦆 До встречи в DUCK'S!`
-  )
+export function createEventReminderMessage(
+  event: EventReminderMessageData,
+  type: ReminderType,
+  userName?: string | null,
+) {
+  const name = userName ? `${userName}, ` : ''
+  const eventFormat = event.title
+  const eventTime = formatDateTime(event.startsAt)
+  const address = `${event.city}, ${event.address}`
+
+  switch (type) {
+    case '24h':
+      return (
+        `🔔 ${name}завтра у тебя событие в DUCK'S\n\n` +
+        `🎲 ${eventFormat}\n` +
+        `🕒 Время: ${eventTime}\n\n` +
+        `Всё готово — ждём тебя за столом 🦆\n\n` +
+        `📍 Адрес: ${address}\n` +
+        `💳 Вход: 1000₽ на месте\n\n` +
+        `Если вдруг не сможешь прийти — напиши заранее, чтобы мы освободили место для другого игрока.`
+      )
+
+    case '2h':
+      return (
+        `⏰ Через 2 часа начинается ${eventFormat}\n\n` +
+        `Уже собираешься? 👀\n\n` +
+        `📍 DUCK'S GameClub\n` +
+        `🗺 Адрес в 2ГИС: ${ADDRESS_2GIS_URL}\n\n` +
+        `До встречи в клубе 🦆`
+      )
+
+    case '15m':
+      return (
+        `🚀 Старт уже через 15 минут\n\n` +
+        `🎲 ${eventFormat}\n` +
+        `📍 DUCK'S GameClub\n\n` +
+        `Если ты уже рядом — заходи, скоро начинаем 🦆`
+      )
+
+    default:
+      return (
+        `🔔 Напоминание о событии\n\n` +
+        `🎲 Событие: "${event.title}"\n` +
+        `🕒 Дата и время: ${eventTime}\n` +
+        `📍 Адрес: ${address}\n\n` +
+        `🦆 До встречи в DUCK'S!`
+      )
+  }
 }
