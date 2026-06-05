@@ -20,7 +20,7 @@ const envSchema = z.object({
   BOT_TOKEN: z.string().min(1),
   TELEGRAM_BOT_API_URL: z.string().url().optional(),
   PUBLIC_SITE_URL: z.string().url().default('http://localhost:3000'),
-  TELEGRAM_BOT_USERNAME: z.string().min(1).optional(),
+  TELEGRAM_BOT_USERNAME: z.string().min(1),
 
   MAILTRAP_TOKEN: z.string().min(1),
   ADMIN_EMAIL: z.string().email(),
