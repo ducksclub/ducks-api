@@ -12,6 +12,18 @@ export class WarmupService {
   constructor(private readonly prisma: PrismaClient) {}
 
   async startAbandonedRegistrationWarmup(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        telegramId: true,
+      },
+    })
+
+    if (!user?.telegramId) {
+      return null
+    }
+
     const hasActiveRegistration = await this.hasActiveRegistration(userId)
 
     if (hasActiveRegistration) {
@@ -23,6 +35,8 @@ export class WarmupService {
     if (!firstTouch) {
       return null
     }
+
+    const nextSendAt = new Date(Date.now() + firstTouch.delayMs)
 
     return this.prisma.userWarmup.upsert({
       where: {
@@ -36,10 +50,14 @@ export class WarmupService {
         scenarioKey: WarmupScenarioKeys.abandonedRegistration,
         currentStep: 0,
         status: WarmupStatuses.active,
-        nextSendAt: new Date(Date.now() + firstTouch.delayMs),
+        nextSendAt,
       },
       update: {
+        currentStep: 0,
         status: WarmupStatuses.active,
+        stoppedAt: null,
+        completedAt: null,
+        nextSendAt,
       },
     })
   }

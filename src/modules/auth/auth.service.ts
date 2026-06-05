@@ -9,14 +9,17 @@ import { PromoLinkService } from '../promo-links/promo-link.service'
 import { SignInDto, SignUpDto, TelegramWebAppUserDto } from './auth.types'
 import type { Role } from '../../common/types/domain'
 import type { PrismaClient } from '@prisma/client'
+import { WarmupService } from '../warmups/warmup.service'
 
 export class AuthService {
   private readonly repository: AuthRepository
   private readonly promoLinks: PromoLinkService
+  private readonly warmupService: WarmupService
 
   constructor(private readonly prisma: PrismaClient) {
     this.repository = new AuthRepository(prisma)
     this.promoLinks = new PromoLinkService(prisma)
+    this.warmupService = new WarmupService(prisma)
   }
 
   async signIn(dto: SignInDto) {
@@ -28,6 +31,8 @@ export class AuthService {
     }
 
     const publicUser = toPublicUser(user)
+
+    await this.warmupService.startAbandonedRegistrationWarmup(user.id)
 
     return {
       user: publicUser,
@@ -73,6 +78,8 @@ export class AuthService {
 
       return createdUser
     })
+
+    await this.warmupService.startAbandonedRegistrationWarmup(user.id)
 
     return {
       user,
@@ -145,6 +152,8 @@ export class AuthService {
       id: user!.id,
       role: user!.role,
     })
+
+    await this.warmupService.startAbandonedRegistrationWarmup(user.id)
 
     return {
       token,

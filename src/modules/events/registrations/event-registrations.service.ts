@@ -15,15 +15,18 @@ import type {
   RegistrationEventWithCount,
 } from '../events.types.js'
 import { PokerSeatsService } from '../poker-seats/poker-seats.service.js'
+import { WarmupService } from '../../warmups/warmup.service.js'
 
 export class EventRegistrationsService {
   private readonly repository: EventRegistrationsRepository
+  private readonly warmupService: WarmupService
 
   constructor(
     prisma: EventPrismaClient,
     private readonly pokerSeats: PokerSeatsService,
   ) {
     this.repository = new EventRegistrationsRepository(prisma)
+    this.warmupService = new WarmupService(prisma)
   }
 
   async registerUser(eventId: string, userId: string) {
@@ -71,6 +74,7 @@ export class EventRegistrationsService {
       })
 
       await sendEventNotification(result.notification!)
+      await this.warmupService.stopAbandonedRegistrationWarmup(userId)
 
       return result.registration
     } catch (error) {
