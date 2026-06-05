@@ -7,6 +7,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().min(1),
+  ENABLE_JOBS: z.coerce.boolean().default(false),
 
   JWT_SECRET: z.string().min(24, 'JWT_SECRET must be at least 24 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
