@@ -19,7 +19,7 @@ export async function sendEventReminders() {
 }
 
 async function sendReminderByConfig(reminder: ReminderConfig) {
-  const now = dayjs().tz('Europe/Moscow')
+  const now = dayjs()
   const reminderStart = now.add(reminder.amount, reminder.unit).subtract(1, 'minute').toDate()
   const reminderEnd = now.add(reminder.amount, reminder.unit).add(1, 'minute').toDate()
 
