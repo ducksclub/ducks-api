@@ -107,7 +107,7 @@ model Event {
   reminderSentNow        Boolean             @default(false)
   reminderSent24h        Boolean             @default(false)
   reminderSent2h         Boolean             @default(false)
-  reminderSent10m        Boolean             @default(false)
+  reminderSent15m        Boolean             @default(false)
   participantLimit       Int
   seatsPerTable          Int                 @default(9)
   pointsForParticipation Int                 @default(10)
