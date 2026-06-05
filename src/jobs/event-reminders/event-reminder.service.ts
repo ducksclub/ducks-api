@@ -19,7 +19,7 @@ export async function sendEventReminders() {
 }
 
 async function sendReminderByConfig(reminder: ReminderConfig) {
-  const now = dayjs()
+  const now = dayjs().tz('Europe/Moscow')
   const reminderStart = now.add(reminder.amount, reminder.unit).subtract(1, 'minute').toDate()
   const reminderEnd = now.add(reminder.amount, reminder.unit).add(1, 'minute').toDate()
 
@@ -46,12 +46,14 @@ async function sendReminderByConfig(reminder: ReminderConfig) {
 
   console.log('Reminder job check:', {
     type: reminder.type,
-    now: now.format('YYYY-MM-DD HH:mm:ss'),
-    reminderStart,
-    reminderEnd,
+    nowMsk: now.format('YYYY-MM-DD HH:mm:ss'),
+    nowUtc: now.utc().format(),
+    reminderStartUtc: dayjs(reminderStart).utc().format(),
+    reminderEndUtc: dayjs(reminderEnd).utc().format(),
+    reminderStartMsk: dayjs(reminderStart).tz('Europe/Moscow').format('YYYY-MM-DD HH:mm:ss'),
+    reminderEndMsk: dayjs(reminderEnd).tz('Europe/Moscow').format('YYYY-MM-DD HH:mm:ss'),
     eventsCount: events.length,
   })
-
   for (const event of events) {
     await sendReminderToEventParticipants(event, reminder)
 
