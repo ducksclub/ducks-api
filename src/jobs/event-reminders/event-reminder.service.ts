@@ -1,8 +1,16 @@
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+import 'dayjs/locale/ru'
+
 import { prisma } from '../../prisma/client'
 import { sendEventNotification } from '../../modules/telegram-bot/telegram-bot.api'
 import { EVENT_REMINDERS, type ReminderConfig } from './event-reminder.config'
 import { createEventReminderMessage } from './event-reminder.messages'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+dayjs.locale('ru')
 
 export async function sendEventReminders() {
   for (const reminder of EVENT_REMINDERS) {
@@ -11,7 +19,7 @@ export async function sendEventReminders() {
 }
 
 async function sendReminderByConfig(reminder: ReminderConfig) {
-  const now = dayjs()
+  const now = dayjs().tz('Europe/Moscow')
   const reminderStart = now.add(reminder.amount, reminder.unit).subtract(1, 'minute').toDate()
   const reminderEnd = now.add(reminder.amount, reminder.unit).add(1, 'minute').toDate()
 

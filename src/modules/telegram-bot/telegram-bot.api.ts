@@ -24,6 +24,7 @@ export async function sendEventNotification(payload: EventRegistrationNotificati
     })
 
     console.log('Telegram bot notification response:', data)
+    console.log('Telegram bot notification payload:', payload)
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('Telegram bot notification failed', {
