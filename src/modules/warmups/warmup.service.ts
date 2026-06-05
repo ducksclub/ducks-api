@@ -147,7 +147,7 @@ export class WarmupService {
     const nearestEvent = await this.getNearestPublishedEvent()
     const message = touch.buildMessage({
       nearestEvent,
-      botLink: env.TELEGRAM_BOT_USERNAME,
+      botLink: `@${env.TELEGRAM_BOT_USERNAME}`,
     })
 
     await sendEventNotification({
