@@ -28,8 +28,8 @@ async function sendReminderByConfig(reminder: ReminderConfig) {
       status: 'published',
       [reminder.sentField]: false,
       startsAt: {
-        gte: reminderStart,
-        lte: reminderEnd,
+        gte: dayjs(reminderStart).utc().format(),
+        lte: dayjs(reminderEnd).utc().format(),
       },
     },
     include: {
