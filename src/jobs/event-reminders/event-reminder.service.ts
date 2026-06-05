@@ -69,6 +69,8 @@ async function sendReminderToEventParticipants(event: any, reminder: ReminderCon
   for (const registration of event.registrations) {
     const telegramId = registration.user.telegramId
 
+    console.log('Event: ', event)
+    console.log('Reminder config: ', reminder)
     if (!telegramId) continue
 
     try {
