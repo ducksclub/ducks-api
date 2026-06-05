@@ -8,7 +8,8 @@ type EventReminderMessageData = {
   address: string
 }
 
-const ADDRESS_2GIS_URL = 'https://go.2gis.com/your-link'
+const ADDRESS_2GIS_URL =
+  'https://2gis.ru/moscow/geo/4504235316232548?m=37.638322%2C55.800898%2F18.61'
 
 export function createEventReminderMessage(
   event: EventReminderMessageData,
