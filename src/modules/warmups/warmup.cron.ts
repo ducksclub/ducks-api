@@ -5,8 +5,7 @@ import { WarmupService } from './warmup.service.js'
 export function startWarmupCron(prisma: PrismaClient) {
   const warmupService = new WarmupService(prisma)
 
-  // cron.schedule('*/10 * * * *', async () => {
-  cron.schedule('* * * * *', async () => {
+  cron.schedule('*/10 * * * *', async () => {
     try {
       await warmupService.processDueWarmups()
     } catch (error) {

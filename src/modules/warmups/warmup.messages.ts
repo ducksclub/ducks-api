@@ -13,9 +13,8 @@ type WarmupTouch = {
   buildMessage: (context: WarmupMessageContext) => string
 }
 
-// const hour = 60 * 60 * 1000
-// const day = 24 * hour
-const minute = 60 * 1000
+const hour = 60 * 60 * 1000
+const day = 24 * hour
 
 function getNearestEventText(context: WarmupMessageContext) {
   if (!context.nearestEvent) {
@@ -28,7 +27,7 @@ function getNearestEventText(context: WarmupMessageContext) {
 export const abandonedRegistrationTouches: WarmupTouch[] = [
   {
     step: 1,
-    delayMs: minute,
+    delayMs: hour,
     buildMessage: ({ botLink }) => {
       return [
         `🍒 Кстати, на турнир по развлекательному покеру в DUCK'S можно прийти совсем без опыта игры.`,
@@ -43,7 +42,7 @@ export const abandonedRegistrationTouches: WarmupTouch[] = [
   },
   {
     step: 2,
-    delayMs: 2 * minute,
+    delayMs: day,
     buildMessage: (context) => {
       return [
         `🥥 Иногда бывает так, что человек приходит играть впервые на турнир Bounty Sniper, вообще без опыта — и при этом выбивает 8 соперников 💪`,
@@ -58,7 +57,7 @@ export const abandonedRegistrationTouches: WarmupTouch[] = [
   },
   {
     step: 3,
-    delayMs: 3 * minute,
+    delayMs: 3 * day,
     buildMessage: (context) => {
       return [
         `😍 Посмотри, как выглядит обычный вечер в DUCK'S:`,
@@ -75,7 +74,7 @@ export const abandonedRegistrationTouches: WarmupTouch[] = [
   },
   {
     step: 4,
-    delayMs: 4 * minute,
+    delayMs: 7 * day,
     buildMessage: ({ botLink }) => {
       return [
         `С каждым турниром в DUCK'S появляется человек, который потом не пропускает почти ни одного события в клубе.`,
