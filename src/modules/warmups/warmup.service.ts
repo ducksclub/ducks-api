@@ -7,6 +7,7 @@ import {
   WarmupStatuses,
 } from '../../common/types/domain.js'
 import { abandonedRegistrationTouches } from './warmup.messages.js'
+import { sendEventNotification } from '../telegram-bot/telegram-bot.api.js'
 
 export class WarmupService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -120,7 +121,7 @@ export class WarmupService {
 
     if (warmup.status !== WarmupStatuses.active) return
 
-    const telegramId = warmup.user.telegramId
+    const telegramId = Number(warmup.user.telegramId)
 
     if (!telegramId) {
       await this.stopWarmup(warmup.id)
@@ -149,8 +150,8 @@ export class WarmupService {
       botLink: env.TELEGRAM_BOT_USERNAME,
     })
 
-    await this.sendTelegramNotification({
-      telegramId,
+    await sendEventNotification({
+      telegramUserId: telegramId,
       message,
     })
 
@@ -222,25 +223,6 @@ export class WarmupService {
       hour: '2-digit',
       minute: '2-digit',
     }).format(date)
-  }
-
-  private async sendTelegramNotification(payload: { telegramId: string; message: string }) {
-    const res = await fetch(`${env.TELEGRAM_BOT_API_URL}/notification`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        telegramId: payload.telegramId,
-        message: payload.message,
-      }),
-    })
-
-    if (!res.ok) {
-      const text = await res.text()
-
-      throw new Error(`Telegram notification failed: ${res.status} ${res.statusText} ${text}`)
-    }
   }
 
   private async stopWarmup(warmupId: string) {
