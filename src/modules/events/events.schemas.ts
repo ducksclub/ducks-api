@@ -18,7 +18,6 @@ const eventBaseSchema = z.object({
   gameType: z.enum(enumValues(GameTypes)),
   startsAt: z.coerce.date(),
   endsAt: z.coerce.date().optional(),
-  location: z.string().max(255).optional(),
   participantLimit: z.number().int().min(1).max(10000),
   seatsPerTable: z.number().int().min(1).max(1000).default(9),
   pointsForParticipation: z.number().int().min(0).max(100000).default(10),
@@ -55,9 +54,3 @@ export const reorderParticipantsSchema = z.object({
     }),
   ),
 })
-
-export type EventIdParams = z.infer<typeof eventIdParamsSchema>
-export type EventListQuery = z.infer<typeof eventListQuerySchema>
-export type CreateEventDto = z.infer<typeof createEventSchema>
-export type UpdateEventDto = z.infer<typeof updateEventSchema>
-export type ReorderParticipantsDto = z.infer<typeof reorderParticipantsSchema>

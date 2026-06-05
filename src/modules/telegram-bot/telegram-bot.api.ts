@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { env } from '../../config/env.js'
 
 export const EventRegistrationNotificationTypes = {
@@ -10,45 +11,32 @@ export type EventRegistrationNotificationType =
   (typeof EventRegistrationNotificationTypes)[keyof typeof EventRegistrationNotificationTypes]
 
 export type EventRegistrationNotificationPayload = {
-  type: EventRegistrationNotificationType
+  message: string
   telegramUserId: number
-  eventTitle: string
-  eventDate: string
-  eventAddress: string
-  waitingPosition?: number
 }
 
 export async function sendEventRegistrationNotification(
-  payload: EventRegistrationNotificationPayload | null,
+  payload: EventRegistrationNotificationPayload,
 ) {
-  if (!payload) return
-
-  if (!env.TELEGRAM_BOT_API_URL || !env.INTERNAL_API_TOKEN) {
-    console.error('Telegram bot notification skipped: TELEGRAM_BOT_API_URL or INTERNAL_API_TOKEN is not configured')
-    return
-  }
-
   try {
-    const response = await fetch(
-      `${env.TELEGRAM_BOT_API_URL}/internal/notifications/event-registration`,
-      {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-internal-token': env.INTERNAL_API_TOKEN,
-        },
-        body: JSON.stringify(payload),
+    const { data } = await axios.post(`${env.TELEGRAM_BOT_API_URL}/notification`, payload, {
+      headers: {
+        'Content-Type': 'application/json',
       },
-    )
+    })
 
-    if (!response.ok) {
-      const responseBody = await response.text().catch(() => '')
-      console.error('Telegram bot notification failed', {
-        status: response.status,
-        body: responseBody,
-      })
-    }
+    console.log('Telegram bot notification response:', data)
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Telegram bot notification failed', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      })
+
+      return
+    }
+
     console.error('Telegram bot notification failed', error)
   }
 }

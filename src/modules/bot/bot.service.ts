@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client'
 
 import { notFound } from '../../common/errors/app-error.js'
 
-import { EventsService } from '../events/events.service.js'
+import { EventsService } from '../events/core/events.service.js'
 
 export class BotEventsService {
   constructor(private readonly prisma: PrismaClient) {}

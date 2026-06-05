@@ -33,9 +33,6 @@ import {
 
 export const eventsRouter = Router()
 
-// =========================
-// PUBLIC
-// =========================
 eventsRouter.get('/', validate({ query: eventListQuerySchema }), asyncHandler(listEvents))
 eventsRouter.get(
   '/templates',
@@ -49,19 +46,13 @@ eventsRouter.get(
   asyncHandler(listMyEvents),
 )
 eventsRouter.get('/reminders', asyncHandler(getReminders))
-
 eventsRouter.get(
   '/active-now',
   // authenticate,
   // authorize(Roles.admin),
   asyncHandler(listActiveEvents),
 )
-
 eventsRouter.get('/:id', validate({ params: eventIdParamsSchema }), asyncHandler(getEvent))
-
-// =========================
-// AUTH USER ACTIONS
-// =========================
 
 eventsRouter.get(
   '/:id/registration',
@@ -69,21 +60,18 @@ eventsRouter.get(
   validate({ params: eventIdParamsSchema }),
   asyncHandler(registrationCheckEvent),
 )
-
 eventsRouter.get(
   '/:id/my-seat',
   authenticate,
   validate({ params: eventIdParamsSchema }),
   asyncHandler(getMyEventSeat),
 )
-
 eventsRouter.post(
   '/:id/register',
   authenticate,
   validate({ params: eventIdParamsSchema }),
   asyncHandler(registerForEvent),
 )
-
 eventsRouter.delete(
   '/:id/register',
   authenticate,
@@ -92,7 +80,7 @@ eventsRouter.delete(
 )
 
 // =========================
-// ADMIN
+// ADMIN (ендпоинты ниже не проверял)
 // =========================
 eventsRouter.post(
   '/:id/finalize',

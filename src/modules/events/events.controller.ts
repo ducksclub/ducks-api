@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express'
 import { unauthorized } from '../../common/errors/app-error.js'
 import { prisma } from '../../prisma/client.js'
-import { EventsService } from './events.service.js'
+import { EventsService } from './core/events.service.js'
+import { EventReminderType } from './events.types.js'
 
 const service = new EventsService(prisma)
 
@@ -113,26 +114,15 @@ export const finalizeEvent = async (req: Request, res: Response) => {
 }
 
 export const getReminders = async (req: Request, res: Response) => {
-  const type = req.query.type as '1h' | '10m'
+  const type = req.query.type as EventReminderType
 
   if (!type) {
     return res.status(400).json({
-      error: 'type is required (1h | 10m)',
+      error: 'type is required (24h | 2h | 10m)',
     })
   }
 
-  const events = await service.getReminders(type)
+  const data = await service.getReminders(type)
 
-  res.json(
-    events.map((event) => ({
-      id: event.id,
-      address: event.address,
-      gameType: event.gameType,
-      startsAt: event.startsAt,
-      reminderType: type, // 🔥 полезно для bot логики
-      participants: event.registrations.map((r) => ({
-        telegramId: r.user.telegramId,
-      })),
-    })),
-  )
+  res.json(data)
 }

@@ -7,7 +7,7 @@ import path from 'path'
 
 import { env } from './config/env.js'
 import { errorHandler } from './common/middleware/error-handler.js'
-import { apiRateLimiter } from './common/middleware/rate-limit.js'
+// import { apiRateLimiter } from './common/middleware/rate-limit.js'
 
 import { authRouter } from './modules/auth/auth.routes.js'
 import { botRouter } from './modules/bot/bot.routes.js'
@@ -36,7 +36,7 @@ app.options(/.*/, cors(corsOptions))
 app.use(compression())
 app.use(express.json({ limit: '1mb' }))
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'))
-app.use(apiRateLimiter)
+// app.use(apiRateLimiter)
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' })

@@ -104,7 +104,9 @@ model Event {
   gameType               String
   startsAt               DateTime
   endsAt                 DateTime?
-  reminderSent1h         Boolean             @default(false)
+  reminderSentNow        Boolean             @default(false)
+  reminderSent24h        Boolean             @default(false)
+  reminderSent2h         Boolean             @default(false)
   reminderSent10m        Boolean             @default(false)
   participantLimit       Int
   seatsPerTable          Int                 @default(9)

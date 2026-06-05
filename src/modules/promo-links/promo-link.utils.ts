@@ -53,7 +53,8 @@ export const normalizePromoCode = (value: string): string => {
 
 const joinPublicSiteUrl = (targetUrl?: string | null) => {
   const baseUrl = env.PUBLIC_SITE_URL.replace(/\/+$/, '')
-  const normalizedTarget = !targetUrl || targetUrl === '/' ? '' : `/${targetUrl.replace(/^\/+/, '')}`
+  const normalizedTarget =
+    !targetUrl || targetUrl === '/' ? '' : `/${targetUrl.replace(/^\/+/, '')}`
   return `${baseUrl}${normalizedTarget}`
 }
 
@@ -69,8 +70,7 @@ export const generatePromoUrl = (params: {
   }
 
   if (params.type === PromoLinkType.TELEGRAM_MINI_APP) {
-    const miniAppSlug = env.TELEGRAM_MINI_APP_SLUG.replace(/^\/+|\/+$/g, '')
-    return `https://t.me/${env.TELEGRAM_BOT_USERNAME}/${miniAppSlug}?startapp=${code}`
+    return `https://t.me/${env.TELEGRAM_BOT_USERNAME}/app?startapp=${code}`
   }
 
   const publicUrl = joinPublicSiteUrl(params.targetUrl)

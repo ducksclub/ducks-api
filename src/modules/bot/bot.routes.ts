@@ -3,7 +3,7 @@ import { validate } from '../../common/middleware/validate.js'
 import { asyncHandler } from '../../common/utils/async-handler.js'
 import { prisma } from '../../prisma/client.js'
 // import { getRules } from '../content/content.controller.js'
-import { EventsService } from '../events/events.service.js'
+import { EventsService } from '../events/core/events.service.js'
 import {
   botEventIdParamsSchema,
   botFeedbackCreateSchema,

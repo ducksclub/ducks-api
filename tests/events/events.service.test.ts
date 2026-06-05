@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EventStatuses, GameTypes, RegistrationStatuses } from '../../src/common/types/domain.js'
-import { EventsService } from '../../src/modules/events/events.service.js'
+import { EventsService } from '../../src/modules/events/core/events.service.js'
 
 describe('EventsService', () => {
   const tx = {
