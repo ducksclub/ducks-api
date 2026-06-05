@@ -3,7 +3,7 @@ import { EventStatuses, RegistrationStatuses } from '../../../common/types/domai
 import {
   EventRegistrationNotificationTypes,
   type EventRegistrationNotificationPayload,
-  sendEventRegistrationNotification,
+  sendEventNotification,
 } from '../../telegram-bot/telegram-bot.api.js'
 import { EventRegistrationsRepository } from './event-registrations.repository.js'
 import { buildEventRegistrationNotificationPayload } from './event-registrations.mapper.js'
@@ -70,7 +70,7 @@ export class EventRegistrationsService {
         )
       })
 
-      await sendEventRegistrationNotification(result.notification!)
+      await sendEventNotification(result.notification!)
 
       return result.registration
     } catch (error) {
@@ -117,7 +117,7 @@ export class EventRegistrationsService {
     })
 
     // При отмене всплывает уведомление
-    // await sendEventRegistrationNotification(result.promotedNotification!)
+    // await sendEventNotification(result.promotedNotification!)
 
     return result.registration
   }

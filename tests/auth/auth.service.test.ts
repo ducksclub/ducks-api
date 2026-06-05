@@ -47,7 +47,8 @@ describe('AuthService', () => {
       updatedAt: new Date(),
     })
 
-    const result = await new AuthService(prisma as never).register({
+    const result = await new AuthService(prisma as never).signUp({
+      username: 'user',
       email: 'user@example.com',
       password: 'Valid12345!',
     })
@@ -70,7 +71,7 @@ describe('AuthService', () => {
     })
 
     await expect(
-      new AuthService(prisma as never).login({ email: 'user@example.com', password: 'wrong' }),
+      new AuthService(prisma as never).signIn({ email: 'user@example.com', password: 'wrong' }),
     ).rejects.toMatchObject({
       statusCode: 401,
     })

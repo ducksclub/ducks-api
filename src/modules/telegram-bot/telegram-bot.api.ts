@@ -15,9 +15,7 @@ export type EventRegistrationNotificationPayload = {
   telegramUserId: number
 }
 
-export async function sendEventRegistrationNotification(
-  payload: EventRegistrationNotificationPayload,
-) {
+export async function sendEventNotification(payload: EventRegistrationNotificationPayload) {
   try {
     const { data } = await axios.post(`${env.TELEGRAM_BOT_API_URL}/notification`, payload, {
       headers: {
