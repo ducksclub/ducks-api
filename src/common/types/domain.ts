@@ -43,3 +43,17 @@ export type ContentPageKey = (typeof ContentPageKeys)[keyof typeof ContentPageKe
 
 export const enumValues = <T extends Record<string, string>>(values: T) =>
   Object.values(values) as [T[keyof T], ...Array<T[keyof T]>]
+
+export const WarmupStatuses = {
+  active: 'active',
+  completed: 'completed',
+  stopped: 'stopped',
+} as const
+
+export type WarmupStatus = (typeof WarmupStatuses)[keyof typeof WarmupStatuses]
+
+export const WarmupScenarioKeys = {
+  abandonedRegistration: 'abandoned_registration',
+} as const
+
+export type WarmupScenarioKey = (typeof WarmupScenarioKeys)[keyof typeof WarmupScenarioKeys]
