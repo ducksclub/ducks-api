@@ -4,14 +4,16 @@ import timezone from 'dayjs/plugin/timezone'
 import 'dayjs/locale/ru'
 
 import { prisma } from '../../prisma/client'
-import { sendEventNotification } from '../../modules/telegram-bot/telegram-bot.api'
 import { EVENT_REMINDERS, type ReminderConfig } from './event-reminder.config'
 import { createEventReminderMessage } from './event-reminder.messages'
 import { RegistrationStatuses } from '../../common/types/domain'
+import { NotificationQueueService } from '../../modules/notifications/notification-queue.service'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
 dayjs.locale('ru')
+
+const notificationQueue = new NotificationQueueService(prisma)
 
 export async function sendEventReminders() {
   for (const reminder of EVENT_REMINDERS) {
@@ -77,7 +79,8 @@ async function sendReminderToEventParticipants(event: any, reminder: ReminderCon
     if (!telegramId) continue
 
     try {
-      await sendEventNotification({
+      await notificationQueue.enqueue({
+        type: 'event_reminder',
         telegramUserId: Number(telegramId),
         message: createEventReminderMessage(event, reminder.type, registration.user.username),
       })
