@@ -7,10 +7,14 @@ import {
   WarmupStatuses,
 } from '../../common/types/domain.js'
 import { abandonedRegistrationTouches } from './warmup.messages.js'
-import { sendEventNotification } from '../telegram-bot/telegram-bot.api.js'
+import { NotificationQueueService } from '../notifications/notification-queue.service.js'
 
 export class WarmupService {
-  constructor(private readonly prisma: PrismaClient) {}
+  private readonly notificationQueue: NotificationQueueService
+
+  constructor(private readonly prisma: PrismaClient) {
+    this.notificationQueue = new NotificationQueueService(prisma)
+  }
 
   async startAbandonedRegistrationWarmup(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -121,9 +125,9 @@ export class WarmupService {
 
     if (warmup.status !== WarmupStatuses.active) return
 
-    const telegramId = Number(warmup.user.telegramId)
+    const telegramUserId = Number(warmup.user.telegramId)
 
-    if (!telegramId) {
+    if (!telegramUserId) {
       await this.stopWarmup(warmup.id)
       return
     }
@@ -150,8 +154,10 @@ export class WarmupService {
       botLink: `@${env.TELEGRAM_BOT_USERNAME}`,
     })
 
-    await sendEventNotification({
-      telegramUserId: telegramId,
+    await this.notificationQueue.enqueue({
+      userId: warmup.userId,
+      telegramUserId: telegramUserId,
+      type: 'warmup',
       message,
     })
 

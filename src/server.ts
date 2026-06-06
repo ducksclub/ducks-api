@@ -3,11 +3,13 @@ import { app } from './app.js'
 import { prisma } from './prisma/client.js'
 import { startJobs } from './jobs/index.js'
 import { startWarmupCron } from './modules/warmups/warmup.cron.js'
+import { startNotificationQueueCron } from './modules/notifications/notification-queue.cron.js'
 
 const server = app.listen(env.PORT, () => {
   if (env.ENABLE_JOBS) {
     startJobs()
     startWarmupCron(prisma)
+    startNotificationQueueCron(prisma)
   }
 
   console.log(`DUCK'S GameClub API is running on port ${env.PORT}`)
