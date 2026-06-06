@@ -84,11 +84,14 @@ export class EventsRepository {
         status: EventStatuses.published,
         endsAt: null,
         startsAt: {
-          lt: new Date(),
+          lte: new Date(),
         },
       },
       orderBy: { startsAt: 'desc' },
       include: registeredCountInclude,
+      omit: {
+        isTemplate: true,
+      },
     })
   }
 }
