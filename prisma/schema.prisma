@@ -197,3 +197,41 @@ model UserWarmup {
   @@unique([userId, scenarioKey])
   @@index([status, nextSendAt])
 }
+
+enum NotificationStatus {
+  pending
+  processing
+  sent
+  failed
+  cancelled
+}
+
+enum NotificationType {
+  warmup
+  broadcast
+  event_reminder
+}
+
+model NotificationQueue {
+  id String @id @default(cuid())
+
+  userId     String?
+  telegramId String
+
+  type   NotificationType
+  status NotificationStatus @default(pending)
+
+  text     String
+  attempts Int    @default(0)
+
+  scheduledAt DateTime  @default(now())
+  sentAt      DateTime?
+  failedAt    DateTime?
+  error       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, scheduledAt])
+  @@index([telegramId, status])
+}
