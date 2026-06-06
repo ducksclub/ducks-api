@@ -18,6 +18,7 @@ import { ratingsRouter } from './modules/ratings/ratings.routes.js'
 import { usersRouter } from './modules/users/users.routes.js'
 import { uploadRouter } from './modules/upload/upload.routes.js'
 import { contactRouter } from './modules/contact/contact.routes.js'
+import { broadcastRouter } from './modules/broadcasts/broadcast.routes.js'
 import {
   adminPromoLinksRouter,
   publicPromoLinksRouter,
@@ -57,6 +58,7 @@ app.use('/api/ratings', ratingsRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/content', contentRouter)
 app.use('/api/bot', botRouter)
+app.use('/api/broadcasts', broadcastRouter)
 app.use('/api/admin/promo-links', adminPromoLinksRouter)
 app.use('/api/promo-links', publicPromoLinksRouter)
 
