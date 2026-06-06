@@ -18,6 +18,13 @@ export class AuthRepository {
     })
   }
 
+  attachTelegramIdToUser(userId: string, telegramId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { telegramId },
+    })
+  }
+
   createUser(
     tx: Prisma.TransactionClient,
     data: Omit<UserWithPassword, 'id'>,

@@ -22,7 +22,7 @@ export class AuthService {
     this.warmupService = new WarmupService(prisma)
   }
 
-  async signIn(dto: SignInDto) {
+  async signIn(dto: SignInDto, telegramWebAppUser?: TelegramWebAppUserDto) {
     const user = await this.repository.findByEmail(dto.email)
     const passwordValid = user ? await verifyPassword(dto.password, user.passwordHash) : false
 
@@ -30,13 +30,23 @@ export class AuthService {
       throw unauthorized('Неверный адрес электронной почты или пароль')
     }
 
-    const publicUser = toPublicUser(user)
+    const telegramId = telegramWebAppUser?.id ? String(telegramWebAppUser.id) : null
+    const signedInUser =
+      telegramId && !user.telegramId
+        ? await this.repository.attachTelegramIdToUser(user.id, telegramId)
+        : user
 
-    await this.warmupService.startAbandonedRegistrationWarmup(user.id)
+    const publicUser = toPublicUser(signedInUser)
+
+    await this.warmupService.startAbandonedRegistrationWarmup(signedInUser.id)
 
     return {
       user: publicUser,
-      token: signAccessToken({ id: user.id, email: user.email, role: user.role as Role }),
+      token: signAccessToken({
+        id: signedInUser.id,
+        email: signedInUser.email,
+        role: signedInUser.role as Role,
+      }),
     }
   }
 

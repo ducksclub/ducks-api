@@ -10,7 +10,8 @@ export class AuthController {
   private readonly service = new AuthService(prisma)
 
   signIn = async (req: Request, res: Response) => {
-    const data = await this.service.signIn(req.body)
+    const telegramUser = parseTelegramWebAppUserFromInitData(req.body.initData)
+    const data = await this.service.signIn(req.body, telegramUser)
     res.json(data)
   }
 

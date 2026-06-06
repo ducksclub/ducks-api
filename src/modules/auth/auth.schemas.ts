@@ -3,6 +3,7 @@ import { z } from 'zod'
 export const signInSchema = z.object({
   email: z.string().email().toLowerCase(),
   password: z.string().min(1).max(128),
+  initData: z.string().min(1).optional(),
 })
 
 export const signUpSchema = z.object({
