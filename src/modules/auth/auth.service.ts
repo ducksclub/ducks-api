@@ -30,11 +30,14 @@ export class AuthService {
       throw unauthorized('Неверный адрес электронной почты или пароль')
     }
 
-    const telegramId = telegramWebAppUser?.id ? String(telegramWebAppUser.id) : null
-    const signedInUser =
-      telegramId && !user.telegramId
+    let signedInUser = user
+
+    if (!user.telegramId) {
+      const telegramId = telegramWebAppUser?.id ? String(telegramWebAppUser.id) : null
+      signedInUser = telegramId
         ? await this.repository.attachTelegramIdToUser(user.id, telegramId)
         : user
+    }
 
     const publicUser = toPublicUser(signedInUser)
 
