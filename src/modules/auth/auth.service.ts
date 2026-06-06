@@ -34,9 +34,14 @@ export class AuthService {
 
     if (!user.telegramId) {
       const telegramId = telegramWebAppUser?.id ? String(telegramWebAppUser.id) : null
-      signedInUser = telegramId
-        ? await this.repository.attachTelegramIdToUser(user.id, telegramId)
-        : user
+
+      if (telegramId) {
+        try {
+          signedInUser = await this.repository.attachTelegramIdToUser(user.id, telegramId)
+        } catch (error) {
+          console.error('Failed to attach Telegram ID to user', error)
+        }
+      }
     }
 
     const publicUser = toPublicUser(signedInUser)
