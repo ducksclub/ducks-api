@@ -59,16 +59,48 @@ export class AuthService {
   }
 
   async signUp(dto: SignUpDto, telegramWebAppUser?: TelegramWebAppUserDto) {
+    const telegramId = telegramWebAppUser?.id ? String(telegramWebAppUser.id) : null
+    const explicitPromoCode = dto.promoCode ?? dto.sourceCode ?? null
+    const passwordHash = await hashPassword(dto.password)
+
+    if (telegramId) {
+      const existingTelegramUser = await this.repository.findByTelegramId(telegramId)
+
+      if (existingTelegramUser) {
+        if (!existingTelegramUser.email.endsWith('@telegram.local')) {
+          throw conflict('Telegram аккаунт уже привязан к зарегистрированному пользователю')
+        }
+
+        const existingEmailUser = await this.repository.findByEmail(dto.email)
+
+        if (existingEmailUser && existingEmailUser.id !== existingTelegramUser.id) {
+          throw conflict('Адрес электронной почты уже зарегистрирован')
+        }
+
+        const user = await this.repository.updateTelegramLocalUserCredentials(
+          existingTelegramUser.id,
+          dto.email,
+          passwordHash,
+        )
+
+        await this.warmupService.startAbandonedRegistrationWarmup(user.id)
+
+        return {
+          user,
+          token: signAccessToken({
+            id: user.id,
+            email: user.email,
+            role: user.role as Role,
+          }),
+        }
+      }
+    }
+
     const existing = await this.repository.findByEmail(dto.email)
 
     if (existing) {
       throw conflict('Адрес электронной почты уже зарегистрирован')
     }
-
-    const telegramId = telegramWebAppUser?.id ? String(telegramWebAppUser.id) : null
-
-    const explicitPromoCode = dto.promoCode ?? dto.sourceCode ?? null
-    const passwordHash = await hashPassword(dto.password)
 
     const user = await this.prisma.$transaction(async (tx) => {
       const promoLink = await this.promoLinks.findActivePromoForRegistration(

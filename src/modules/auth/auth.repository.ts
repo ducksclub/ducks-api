@@ -25,6 +25,17 @@ export class AuthRepository {
     })
   }
 
+  updateTelegramLocalUserCredentials(userId: string, email: string, passwordHash: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        email,
+        passwordHash,
+      },
+      select: publicUserSelect,
+    })
+  }
+
   createUser(
     tx: Prisma.TransactionClient,
     data: Omit<UserWithPassword, 'id'>,
