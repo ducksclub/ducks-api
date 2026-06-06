@@ -213,25 +213,21 @@ enum NotificationType {
 }
 
 model NotificationQueue {
-  id String @id @default(cuid())
-
-  userId     String?
-  telegramId String
-
-  type   NotificationType
-  status NotificationStatus @default(pending)
-
-  text     String
-  attempts Int    @default(0)
-
-  scheduledAt DateTime  @default(now())
-  sentAt      DateTime?
-  failedAt    DateTime?
-  error       String?
+  id             String             @id @default(cuid())
+  userId         String?
+  telegramUserId Int
+  type           NotificationType
+  status         NotificationStatus @default(pending)
+  message        String
+  attempts       Int                @default(0)
+  scheduledAt    DateTime           @default(now())
+  sentAt         DateTime?
+  failedAt       DateTime?
+  error          String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([status, scheduledAt])
-  @@index([telegramId, status])
+  @@index([telegramUserId, status])
 }
