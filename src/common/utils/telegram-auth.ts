@@ -7,7 +7,7 @@ export function verifyTelegramWebAppData(initData: string, botToken: string) {
 
   const hash = params.get('hash')
 
-  if (!hash) return false
+  if (!hash || !/^[a-f0-9]{64}$/i.test(hash)) return false
 
   params.delete('hash')
   params.delete('signature')
@@ -27,7 +27,7 @@ export function verifyTelegramWebAppData(initData: string, botToken: string) {
 
   const hmac = crypto.createHmac('sha256', secret).update(dataCheckString).digest('hex')
 
-  return hmac !== hash
+  return crypto.timingSafeEqual(Buffer.from(hmac, 'hex'), Buffer.from(hash, 'hex'))
 }
 
 type Payload = {
