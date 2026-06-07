@@ -181,7 +181,7 @@ export class AuthService {
           telegramId,
           passwordHash,
           role: Roles.user,
-          username: tgUserWebAppDto.first_name ?? `tg_user_${telegramId}`,
+          username: tgUserWebAppDto?.username ?? `tg_user_${telegramId}`,
           email: `tg_${telegramId}@telegram.local`,
           promoLinkId: promoLink?.id ?? null,
           sourceCode: promoLink?.code ?? null,
