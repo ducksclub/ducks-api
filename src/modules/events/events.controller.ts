@@ -89,6 +89,11 @@ export const listActiveEvents = async (req: Request, res: Response) => {
   res.json({ data })
 }
 
+export const listUpcomingEvents = async (req: Request, res: Response) => {
+  const data = await service.listUpcoming()
+  res.json({ data })
+}
+
 export const getEventParticipants = async (req: Request, res: Response) => {
   const id = String(req.params.id)
 

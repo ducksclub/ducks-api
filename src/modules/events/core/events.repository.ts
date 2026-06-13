@@ -95,4 +95,21 @@ export class EventsRepository {
       },
     })
   }
+
+  findUpcoming() {
+    return this.prisma.event.findMany({
+      where: {
+        isTemplate: false,
+        status: EventStatuses.published,
+        startsAt: {
+          gte: new Date(),
+        },
+      },
+      orderBy: { startsAt: 'asc' },
+      include: registeredCountInclude,
+      omit: {
+        isTemplate: true,
+      },
+    })
+  }
 }

@@ -17,6 +17,7 @@ import {
   listEvents,
   listMyEvents,
   listTemplates,
+  listUpcomingEvents,
   registerForEvent,
   registrationCheckEvent,
   reorderParticipants,
@@ -52,6 +53,7 @@ eventsRouter.get(
   // authorize(Roles.admin),
   asyncHandler(listActiveEvents),
 )
+eventsRouter.get('/upcoming', asyncHandler(listUpcomingEvents))
 eventsRouter.get('/:id', validate({ params: eventIdParamsSchema }), asyncHandler(getEvent))
 
 eventsRouter.get(

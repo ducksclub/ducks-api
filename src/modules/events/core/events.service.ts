@@ -150,6 +150,12 @@ export class EventsService {
     return events.map((event) => mapEventWithPokerSeatLayout(event))
   }
 
+  async listUpcoming() {
+    const events = await this.repository.findUpcoming()
+
+    return events.map((event) => mapEventWithPokerSeatLayout(event))
+  }
+
   async getEventParticipants(eventId: string) {
     return this.results.getEventParticipants(eventId)
   }
