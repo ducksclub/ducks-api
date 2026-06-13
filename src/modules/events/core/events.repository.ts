@@ -81,6 +81,7 @@ export class EventsRepository {
   findActiveNow() {
     return this.prisma.event.findMany({
       where: {
+        isTemplate: false,
         status: EventStatuses.published,
         endsAt: null,
         startsAt: {
