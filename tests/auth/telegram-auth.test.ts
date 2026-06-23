@@ -62,4 +62,12 @@ describe('verifyTelegramWebAppData', () => {
     expect(verifyTelegramWebAppData('auth_date=1710000000', botToken)).toBe(false)
     expect(verifyTelegramWebAppData('auth_date=1710000000&hash=bad', botToken)).toBe(false)
   })
+
+  it('accepts valid Telegram signature for the configured bot id', () => {
+    const initData =
+      'query_id=AAFhCd0RAwAAAGEJ3RG9Me5R&user=%7B%22id%22%3A6742149473%2C%22first_name%22%3A%22Maulen%22%2C%22last_name%22%3A%22Azikulov%22%2C%22username%22%3A%22azikulov%22%2C%22language_code%22%3A%22ru%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2Fo9-yxcdolrF4yvlbpbAaECk4byt3AObbSVriLjzdJ_0yZ5T6RA31HAVxTKZE-mB3.svg%22%7D&auth_date=1782205134&signature=zwXlRONtnusmBifOB89qxzzLmx13dI25FWICHl6SYyuz59iSeCxGcjjzKzQ8iS5a9apqaCrhabkbfD-YYRYoBA&hash=ecebec0a70413bcc2a83490180fb4af28b217a913b0249fc2841adea4c7138e5'
+
+    expect(verifyTelegramWebAppData(initData, '8746309879:outdated-token')).toBe(true)
+    expect(verifyTelegramWebAppData(initData, '1234567890:outdated-token')).toBe(false)
+  })
 })
