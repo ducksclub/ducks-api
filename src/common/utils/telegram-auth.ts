@@ -1,10 +1,8 @@
 import jwt from 'jsonwebtoken'
 import crypto from 'node:crypto'
 
-// в данной функции я не разобрался и есть сомнение
 export function verifyTelegramWebAppData(initData: string, botToken: string) {
   const params = new URLSearchParams(initData)
-
   const hash = params.get('hash')
 
   if (!hash) return false
@@ -23,11 +21,15 @@ export function verifyTelegramWebAppData(initData: string, botToken: string) {
     .map((key) => `${key}=${data[key]}`)
     .join('\n')
 
-  const secret = crypto.createHash('sha256').update(botToken).digest()
+  const secret = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest()
 
   const hmac = crypto.createHmac('sha256', secret).update(dataCheckString).digest('hex')
+  const hmacBuffer = Buffer.from(hmac, 'hex')
+  const hashBuffer = Buffer.from(hash, 'hex')
 
-  return hmac !== hash
+  if (hmacBuffer.length !== hashBuffer.length) return false
+
+  return crypto.timingSafeEqual(hmacBuffer, hashBuffer)
 }
 
 type Payload = {

@@ -17,7 +17,7 @@ function parseTelegramWebAppUser(initData: string): TelegramWebAppUserDto {
   }
 
   try {
-    return telegramWebAppUserSchema.parse(JSON.parse(decodeURIComponent(userRaw)))
+    return telegramWebAppUserSchema.parse(JSON.parse(userRaw))
   } catch {
     throw badRequest('Некорректные данные пользователя Telegram')
   }
