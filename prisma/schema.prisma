@@ -112,6 +112,7 @@ model Event {
   participantLimit       Int
   seatsPerTable          Int                 @default(9)
   pointsForParticipation Int                 @default(10)
+  initialDepositAmount   Int                 @default(0)
   isTemplate             Boolean?            @default(false)
   status                 String              @default("published")
   createdAt              DateTime            @default(now())

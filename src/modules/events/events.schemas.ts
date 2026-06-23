@@ -21,6 +21,7 @@ const eventBaseSchema = z.object({
   participantLimit: z.number().int().min(1).max(10000),
   seatsPerTable: z.number().int().min(1).max(1000).default(9),
   pointsForParticipation: z.number().int().min(0).max(100000).default(10),
+  initialDepositAmount: z.number().int().min(0).max(100000000).default(0),
   status: z.enum(enumValues(EventStatuses)).default(EventStatuses.published),
   isTemplate: z.boolean().optional().default(false),
   imageUrl: z.string().optional(),

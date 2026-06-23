@@ -20,6 +20,7 @@ export function mapCreateEventData(dto: CreateEventDto): Prisma.EventCreateInput
     participantLimit: dto.participantLimit,
     seatsPerTable: dto.seatsPerTable,
     pointsForParticipation: dto.pointsForParticipation,
+    initialDepositAmount: dto.initialDepositAmount,
     status: dto.status,
     isTemplate: dto.isTemplate ?? false,
     imageUrl: dto.imageUrl ?? null,
@@ -46,6 +47,9 @@ export function mapUpdateEventData(dto: UpdateEventDto): Prisma.EventUpdateInput
     ...(dto.pointsForParticipation !== undefined && {
       pointsForParticipation: dto.pointsForParticipation,
     }),
+    ...(dto.initialDepositAmount !== undefined && {
+      initialDepositAmount: dto.initialDepositAmount,
+    }),
     ...(dto.status !== undefined && { status: dto.status }),
     ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl }),
     ...(dto.imageHash !== undefined && { imageHash: dto.imageHash }),
@@ -66,6 +70,7 @@ export function mapEventReminderResponse(
     id: string
     address: string
     gameType: string
+    initialDepositAmount: number
     startsAt: Date
     registrations: Array<{ user: { telegramId: string | null } }>
   },
@@ -75,6 +80,7 @@ export function mapEventReminderResponse(
     id: event.id,
     address: event.address,
     gameType: event.gameType,
+    initialDepositAmount: event.initialDepositAmount,
     startsAt: event.startsAt,
     reminderType: type,
     participants: event.registrations.map((registration) => ({
