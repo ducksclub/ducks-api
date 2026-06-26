@@ -12,7 +12,7 @@ const server = app.listen(env.PORT, () => {
     startNotificationQueueCron(prisma)
   }
 
-  console.log(`DUCK'S GameClub API is running on port ${env.PORT}`)
+  console.info(`🦆 [DUCK'S GameClub API] Сервер запущен на порту ${env.PORT}`)
 })
 
 const shutdown = async () => {

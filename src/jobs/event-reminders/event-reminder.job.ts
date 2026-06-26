@@ -2,7 +2,7 @@ import cron from 'node-cron'
 import { sendEventReminders } from './event-reminder.service'
 
 export function startEventReminderJob() {
-  console.log('Event reminder job started')
+  console.info('🔔 [EventReminderJob] Задача напоминаний запущена')
 
   cron.schedule('* * * * *', async () => {
     try {
