@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import { unauthorized } from '../../common/errors/app-error'
 import { prisma } from '../../prisma/client'
 import { UsersService } from './users.service'
+import type { GetProfileByNicknameQueryDto, GetProfileByTelegramIdParamsDto } from './users.schemas'
 
 export class UserController {
   private readonly service = new UsersService(prisma)
@@ -19,7 +20,14 @@ export class UserController {
   }
 
   getMeByTelegramId = async (req: Request, res: Response) => {
-    const profile = await this.service.getProfileByTelegramId(String(req.params.id))
+    const { telegramId } = req.query as GetProfileByTelegramIdParamsDto
+    const profile = await this.service.getProfileByTelegramId(telegramId)
+    res.json(profile)
+  }
+
+  getProfileByNickname = async (req: Request, res: Response) => {
+    const { nickname } = req.query as GetProfileByNicknameQueryDto
+    const profile = await this.service.getProfileByNickname(nickname)
     res.json(profile)
   }
 }

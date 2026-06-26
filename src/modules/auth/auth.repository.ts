@@ -14,13 +14,24 @@ export class AuthRepository {
   findByNickname(nickname: string) {
     return this.prisma.user.findUnique({
       where: { nickname },
+      omit: {
+        passwordHash: true,
+        sourceCode: true,
+        sourceType: true,
+        promoLinkId: true,
+      },
     })
   }
 
   findByTelegramId(telegramId: string) {
     return this.prisma.user.findUnique({
       where: { telegramId },
-      select: publicUserSelect,
+      omit: {
+        passwordHash: true,
+        sourceCode: true,
+        sourceType: true,
+        promoLinkId: true,
+      },
     })
   }
 
