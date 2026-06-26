@@ -3,45 +3,23 @@ import { unauthorized } from '../../common/errors/app-error'
 import { prisma } from '../../prisma/client'
 import { UsersService } from './users.service'
 
-const service = new UsersService(prisma)
+export class UserController {
+  private readonly service = new UsersService(prisma)
 
-export const me = async (req: Request, res: Response) => {
-  if (!req.user) throw unauthorized()
-  res.json(await service.getProfile(req.user.id))
-}
+  getMe = async (req: Request, res: Response) => {
+    if (!req.user) throw unauthorized('Вы не авторизованы')
+    const profile = await this.service.getProfile(req.user.id)
+    res.json(profile)
+  }
 
-export const update = async (req: Request, res: Response) => {
-  if (!req.user) throw unauthorized()
-  res.json(await service.updateProfile(req.body, req.user.id))
-}
+  updateProfile = async (req: Request, res: Response) => {
+    if (!req.user) throw unauthorized()
+    const updatedProfile = await this.service.updateProfile(req.body, req.user.id)
+    res.json(updatedProfile)
+  }
 
-export const getMeByTelegramId = async (req: Request, res: Response) => {
-  res.json(await service.getProfileByTelegramId(String(req.params.id)))
-}
-
-export async function createUserController(req: Request, res: Response) {
-  try {
-    const { telegramId, username, promoCode, sourceCode } = req.body
-
-    if (!telegramId) {
-      return res.status(400).json({
-        error: 'telegramId is required',
-      })
-    }
-
-    const user = await service.createUserService({
-      telegramId,
-      username,
-      promoCode,
-      sourceCode,
-    })
-
-    return res.json(user)
-  } catch (error) {
-    console.error('CREATE_USER_ERROR:', error)
-
-    return res.status(500).json({
-      error: 'Internal server error',
-    })
+  getMeByTelegramId = async (req: Request, res: Response) => {
+    const profile = await this.service.getProfileByTelegramId(String(req.params.id))
+    res.json(profile)
   }
 }
