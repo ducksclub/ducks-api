@@ -15,22 +15,8 @@ export class UsersService {
   }
 
   async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        role: true,
-        email: true,
-        phone: true,
-        nickname: true,
-        avatarUrl: true,
-        telegramId: true,
-        createdAt: true,
-        updatedAt: true,
-        ratings: { select: { gameType: true, points: true } },
-      },
-    })
-    if (!user) throw notFound('User not found')
+    const user = await this.authRepository.findById(userId)
+    if (!user) throw notFound('Пользователь не найден')
     return user
   }
 

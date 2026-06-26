@@ -5,6 +5,18 @@ import type { PrismaClient } from '@prisma/client'
 export class AuthRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
+  findById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      omit: {
+        passwordHash: true,
+        sourceCode: true,
+        sourceType: true,
+        promoLinkId: true,
+      },
+    })
+  }
+
   findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
