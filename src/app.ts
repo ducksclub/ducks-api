@@ -10,7 +10,6 @@ import { errorHandler } from './common/middleware/error-handler.js'
 // import { apiRateLimiter } from './common/middleware/rate-limit.js'
 
 import { authRouter } from './modules/auth/auth.routes.js'
-import { botRouter } from './modules/bot/bot.routes.js'
 import { contentRouter } from './modules/content/content.routes.js'
 import { eventsRouter } from './modules/events/events.routes.js'
 import { feedbackRouter } from './modules/feedback/feedback.routes.js'
@@ -57,19 +56,16 @@ app.use('/api/events', eventsRouter)
 app.use('/api/ratings', ratingsRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/content', contentRouter)
-app.use('/api/bot', botRouter)
 app.use('/api/broadcasts', broadcastRouter)
+
 app.use('/api/admin/promo-links', adminPromoLinksRouter)
 app.use('/api/promo-links', publicPromoLinksRouter)
-
-app.use('/admin/promo-links', adminPromoLinksRouter)
-app.use('/promo-links', publicPromoLinksRouter)
 
 app.use((_req, res) => {
   res.status(404).json({
     error: {
       code: 'NOT_FOUND',
-      message: 'Route not found',
+      message: 'Маршрут не найден',
     },
   })
 })
