@@ -47,16 +47,6 @@ async function sendReminderByConfig(reminder: ReminderConfig) {
     },
   })
 
-  console.log('Reminder job check:', {
-    type: reminder.type,
-    nowMsk: now.format('YYYY-MM-DD HH:mm:ss'),
-    nowUtc: now.utc().format(),
-    reminderStartUtc: dayjs(reminderStart).utc().format(),
-    reminderEndUtc: dayjs(reminderEnd).utc().format(),
-    reminderStartMsk: dayjs(reminderStart).tz('Europe/Moscow').format('YYYY-MM-DD HH:mm:ss'),
-    reminderEndMsk: dayjs(reminderEnd).tz('Europe/Moscow').format('YYYY-MM-DD HH:mm:ss'),
-    eventsCount: events.length,
-  })
   for (const event of events) {
     await sendReminderToEventParticipants(event, reminder)
 
