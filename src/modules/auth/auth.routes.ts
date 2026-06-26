@@ -2,7 +2,12 @@ import { Router } from 'express'
 import { AuthController } from './auth.controller'
 import { validate } from '../../common/middleware/validate'
 import { asyncHandler } from '../../common/utils/async-handler'
-import { signInSchema, signUpSchema, signInWithTelegramSchema } from './auth.schemas'
+import {
+  signInSchema,
+  signUpSchema,
+  signInWithTelegramSchema,
+  nicknameAvailabilitySchema,
+} from './auth.schemas'
 
 export const authRouter = Router()
 export const controller = new AuthController()
@@ -13,4 +18,9 @@ authRouter.post(
   '/signin-with-telegram',
   validate({ body: signInWithTelegramSchema }),
   asyncHandler(controller.signInWithTelegram),
+)
+authRouter.get(
+  '/nickname/availability',
+  validate({ query: nicknameAvailabilitySchema }),
+  asyncHandler(controller.nicknameAvailability),
 )

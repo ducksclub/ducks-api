@@ -22,3 +22,7 @@ export const telegramWebAppUserSchema = z.object({
   first_name: z.string().min(1).max(128),
   last_name: z.string().min(1).max(128).optional(),
 })
+
+export const nicknameAvailabilitySchema = z.object({
+  nickname: z.string().trim().min(3).max(30),
+})

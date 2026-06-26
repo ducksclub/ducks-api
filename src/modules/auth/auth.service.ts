@@ -9,7 +9,12 @@ import { hashPassword, verifyPassword } from '../../common/utils/password'
 
 import type { Role } from '../../common/types/domain'
 import type { PrismaClient } from '@prisma/client'
-import type { SignInDto, SignUpDto, TelegramWebAppUserDto } from './auth.types'
+import type {
+  NicknameAvailabilityDto,
+  SignInDto,
+  SignUpDto,
+  TelegramWebAppUserDto,
+} from './auth.types'
 
 export class AuthService {
   private readonly repository: AuthRepository
@@ -70,6 +75,14 @@ export class AuthService {
         email: createdUser.email,
         nickname: createdUser.nickname,
       }),
+    }
+  }
+
+  async nicknameAvailability(dto: NicknameAvailabilityDto) {
+    const user = await this.repository.findByNickname(dto.nickname)
+
+    return {
+      available: !user,
     }
   }
 

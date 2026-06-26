@@ -16,6 +16,11 @@ export class AuthController {
     res.status(201).json(result)
   }
 
+  nicknameAvailability = async (req: Request, res: Response) => {
+    const data = await this.service.nicknameAvailability(req.query as { nickname: string })
+    res.json(data)
+  }
+
   signInWithTelegram = async (req: Request, res: Response) => {
     const telegramUser = getTelegramWebAppUserFromInitData(req.body.initData)
     const data = await this.service.signInWithTelegram(telegramUser)
