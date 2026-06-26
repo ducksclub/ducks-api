@@ -1,9 +1,9 @@
-import compression from 'compression'
 import cors from 'cors'
-import express from 'express'
+import path from 'path'
 import helmet from 'helmet'
 import morgan from 'morgan'
-import path from 'path'
+import express from 'express'
+import compression from 'compression'
 
 import { env } from './config/env'
 import { corsOptions } from './common/utils/cors'
