@@ -1,28 +1,26 @@
-import { toPublicUser } from './auth.helpers'
-import { Roles } from '../../common/types/domain'
+import { WarmupService } from '../warmups/warmup.service'
 import { AuthRepository } from './auth.repository'
+
+import { Roles } from '../../common/types/domain'
+import { toPublicUser } from './auth.helpers'
+import { signAccessToken } from '../../common/utils/jwt'
 import { conflict, unauthorized } from '../../common/errors/app-error'
 import { hashPassword, verifyPassword } from '../../common/utils/password'
-import { signAccessToken } from '../../common/utils/jwt'
-import { generateToken } from '../../common/utils/telegram-auth'
-import { PromoLinkService } from '../promo-links/promo-link.service'
-import { SignInDto, SignUpDto, TelegramWebAppUserDto } from './auth.types'
+
 import type { Role } from '../../common/types/domain'
 import type { PrismaClient } from '@prisma/client'
-import { WarmupService } from '../warmups/warmup.service'
+import type { SignInDto, SignUpDto, TelegramWebAppUserDto } from './auth.types'
 
 export class AuthService {
   private readonly repository: AuthRepository
-  private readonly promoLinks: PromoLinkService
   private readonly warmupService: WarmupService
 
   constructor(private readonly prisma: PrismaClient) {
     this.repository = new AuthRepository(prisma)
-    this.promoLinks = new PromoLinkService(prisma)
     this.warmupService = new WarmupService(prisma)
   }
 
-  async signIn(dto: SignInDto, telegramWebAppUser?: TelegramWebAppUserDto) {
+  async signIn(dto: SignInDto) {
     const user = await this.repository.findByEmail(dto.email)
     const passwordValid = user ? await verifyPassword(dto.password, user.passwordHash) : false
 
@@ -30,177 +28,74 @@ export class AuthService {
       throw unauthorized('Неверный адрес электронной почты или пароль')
     }
 
-    let signedInUser = user
-
-    if (!user.telegramId) {
-      const telegramId = telegramWebAppUser?.id ? String(telegramWebAppUser.id) : null
-
-      if (telegramId) {
-        try {
-          signedInUser = await this.repository.attachTelegramIdToUser(user.id, telegramId)
-        } catch (error) {
-          console.error('Failed to attach Telegram ID to user', error)
-        }
-      }
-    }
-
-    const publicUser = toPublicUser(signedInUser)
-
-    await this.warmupService.startAbandonedRegistrationWarmup(signedInUser.id)
+    const publicUser = toPublicUser(user)
+    await this.warmupService.startAbandonedRegistrationWarmup(user.id)
 
     return {
       user: publicUser,
       token: signAccessToken({
-        id: signedInUser.id,
-        email: signedInUser.email,
-        role: signedInUser.role as Role,
+        id: user.id,
+        role: user.role as Role,
+        email: user.email,
+        nickname: user.nickname,
       }),
     }
   }
 
-  async signUp(dto: SignUpDto, telegramWebAppUser?: TelegramWebAppUserDto) {
-    const telegramId = telegramWebAppUser?.id ? String(telegramWebAppUser.id) : null
-    const explicitPromoCode = dto.promoCode ?? dto.sourceCode ?? null
-    const passwordHash = await hashPassword(dto.password)
+  async signUp(dto: SignUpDto) {
+    const userExists = await this.repository.findByEmail(dto.email)
 
-    if (telegramId) {
-      const existingTelegramUser = await this.repository.findByTelegramId(telegramId)
-
-      if (existingTelegramUser) {
-        if (!existingTelegramUser.email.endsWith('@telegram.local')) {
-          throw conflict('Telegram аккаунт уже привязан к зарегистрированному пользователю')
-        }
-
-        const existingEmailUser = await this.repository.findByEmail(dto.email)
-
-        if (existingEmailUser && existingEmailUser.id !== existingTelegramUser.id) {
-          throw conflict('Адрес электронной почты уже зарегистрирован')
-        }
-
-        const user = await this.repository.updateTelegramLocalUserCredentials(
-          existingTelegramUser.id,
-          dto.email,
-          passwordHash,
-        )
-
-        await this.warmupService.startAbandonedRegistrationWarmup(user.id)
-
-        return {
-          user,
-          token: signAccessToken({
-            id: user.id,
-            email: user.email,
-            role: user.role as Role,
-          }),
-        }
-      }
-    }
-
-    const existing = await this.repository.findByEmail(dto.email)
-
-    if (existing) {
+    if (userExists) {
       throw conflict('Адрес электронной почты уже зарегистрирован')
     }
 
-    const user = await this.prisma.$transaction(async (tx) => {
-      const promoLink = await this.promoLinks.findActivePromoForRegistration(
-        tx,
-        explicitPromoCode,
-        telegramId,
-      )
-
-      const createdUser = await this.repository.createUser(tx, {
-        telegramId,
-        passwordHash,
-        avatarUrl: null,
-        role: Roles.user,
-        email: dto.email,
-        username: dto.username,
-        phone: dto.phone ?? null,
-        promoLinkId: promoLink?.id ?? null,
-        sourceCode: promoLink?.code ?? null,
-        sourceType: promoLink?.type ?? null,
-      })
-
-      if (promoLink) {
-        await this.promoLinks.incrementRegistration(tx, promoLink.id)
-      }
-
-      return createdUser
+    const passwordHash = await hashPassword(dto.password)
+    const createdUser = await this.repository.createUser({
+      role: Roles.user,
+      email: dto.email,
+      nickname: dto.nickname,
+      phone: dto.phone ?? null,
+      avatarUrl: null,
+      telegramId: null,
+      passwordHash,
     })
 
-    await this.warmupService.startAbandonedRegistrationWarmup(user.id)
+    await this.warmupService.startAbandonedRegistrationWarmup(createdUser.id)
 
     return {
-      user,
+      user: createdUser,
       token: signAccessToken({
-        id: user.id,
-        email: user.email,
-        role: user.role as Role,
+        id: createdUser.id,
+        role: createdUser.role as Role,
+        email: createdUser.email,
+        nickname: createdUser.nickname,
       }),
     }
   }
 
-  async signInWithTelegram(tgUserWebAppDto: TelegramWebAppUserDto, promoCode?: string | null) {
-    const telegramId = String(tgUserWebAppDto.id)
-
+  async signInWithTelegram(dto: TelegramWebAppUserDto) {
+    const telegramId = String(dto.id)
     let user = await this.repository.findByTelegramId(telegramId)
 
-    if (user && !user.promoLinkId && !user.sourceCode && !user.sourceType) {
-      const userId = user.id
-
-      await this.prisma.$transaction(async (tx) => {
-        const promoLink = await this.promoLinks.findActivePromoForRegistration(
-          tx,
-          promoCode,
-          telegramId,
-        )
-
-        if (promoLink) {
-          await this.promoLinks.attachPromoToExistingUser(tx, userId, promoLink)
-        }
-      })
-
-      user = await this.repository.findByTelegramId(telegramId)
-    }
-
-    /**
-     * привязка телеграм аккаунта
-     */
     if (!user) {
       const passwordHash = await hashPassword('telegram-password')
 
-      user = await this.prisma.$transaction(async (tx) => {
-        const promoLink = await this.promoLinks.findActivePromoForRegistration(
-          tx,
-          promoCode,
-          telegramId,
-        )
-
-        const createdUser = await this.repository.createUser(tx, {
-          telegramId,
-          passwordHash,
-          role: Roles.user,
-          username: tgUserWebAppDto?.username ?? `tg_user_${telegramId}`,
-          email: `tg_${telegramId}@telegram.local`,
-          promoLinkId: promoLink?.id ?? null,
-          sourceCode: promoLink?.code ?? null,
-          sourceType: promoLink?.type ?? null,
-          phone: null,
-          avatarUrl: null,
-        })
-
-        if (promoLink) {
-          await this.promoLinks.incrementRegistration(tx, promoLink.id)
-        }
-
-        return createdUser
+      user = await this.repository.createUser({
+        telegramId,
+        passwordHash,
+        role: Roles.user,
+        email: `tg_${telegramId}@telegram.local`,
+        nickname: dto?.username ?? `tg_user_${telegramId}`,
+        phone: null,
+        avatarUrl: null,
       })
     }
 
-    const token = generateToken({
-      id: user!.id,
-      role: user!.role,
+    const token = signAccessToken({
+      id: user.id,
+      role: user.role as Role,
+      email: user.email,
+      nickname: user.nickname,
     })
 
     await this.warmupService.startAbandonedRegistrationWarmup(user.id)

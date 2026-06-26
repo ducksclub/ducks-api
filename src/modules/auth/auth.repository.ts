@@ -1,6 +1,6 @@
 import { publicUserSelect } from './auth.helpers'
 import type { PublicUser, UserWithPassword } from './auth.types'
-import type { Prisma, PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
 export class AuthRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -36,21 +36,14 @@ export class AuthRepository {
     })
   }
 
-  createUser(
-    tx: Prisma.TransactionClient,
-    data: Omit<UserWithPassword, 'id'>,
-  ): Promise<PublicUser> {
-    return tx.user.create({
+  createUser(data: Omit<UserWithPassword, 'id'>): Promise<PublicUser> {
+    return this.prisma.user.create({
       data: {
         role: data.role,
         email: data.email,
         phone: data.phone ?? null,
-        username: data.username,
+        nickname: data.nickname,
         passwordHash: data.passwordHash,
-        telegramId: data.telegramId ?? null,
-        promoLinkId: data.promoLinkId ?? null,
-        sourceCode: data.sourceCode ?? null,
-        sourceType: data.sourceType ?? null,
       },
       select: publicUserSelect,
     })

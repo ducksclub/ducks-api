@@ -19,7 +19,7 @@ function parseTelegramWebAppUser(initData: string): TelegramWebAppUserDto {
   try {
     return telegramWebAppUserSchema.parse(JSON.parse(userRaw))
   } catch {
-    throw badRequest('Некорректные данные пользователя Telegram')
+    throw badRequest('Не удалось спарсить данные пользователя Telegram')
   }
 }
 
@@ -42,12 +42,9 @@ export const publicUserSelect = {
   role: true,
   email: true,
   phone: true,
-  username: true,
+  nickname: true,
   avatarUrl: true,
   telegramId: true,
-  sourceCode: true,
-  sourceType: true,
-  promoLinkId: true,
 } satisfies Prisma.UserSelect
 
 export const userWithPasswordSelect = {
