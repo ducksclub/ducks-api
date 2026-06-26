@@ -17,3 +17,5 @@ export const forbidden = (message = 'Forbidden') => new AppError(403, 'FORBIDDEN
 export const unauthorized = (message = 'Unauthorized') => new AppError(401, 'UNAUTHORIZED', message)
 export const badRequest = (message: string, details?: unknown) =>
   new AppError(400, 'BAD_REQUEST', message, details)
+export const internalServerError = (message = 'Unexpected server error') =>
+  new AppError(500, 'INTERNAL_SERVER_ERROR', message)

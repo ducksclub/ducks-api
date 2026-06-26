@@ -6,21 +6,40 @@ import { verifyTelegramWebAppData } from '../../common/utils/telegram-auth'
 import type { PublicUser, TelegramWebAppUserDto, UserWithPassword } from './auth.types'
 
 function parseTelegramWebAppUser(initData: string): TelegramWebAppUserDto {
-  if (!verifyTelegramWebAppData(initData, env.BOT_TOKEN)) {
-    throw unauthorized('Некорректные данные авторизации Telegram')
+  const params = new URLSearchParams(initData)
+  const hash = params.get('hash')
+  const authDate = params.get('auth_date')
+  const userRaw = params.get('user')
+
+  if (!hash) {
+    throw badRequest('Hash авторизации Telegram отсутствует')
   }
-
-  const userRaw = new URLSearchParams(initData).get('user')
-
+  if (!authDate) {
+    throw badRequest('Дата авторизации Telegram отсутствует')
+  }
   if (!userRaw) {
     throw badRequest('Данные пользователя Telegram отсутствуют')
   }
 
-  try {
-    return telegramWebAppUserSchema.parse(JSON.parse(userRaw))
-  } catch {
-    throw badRequest('Не удалось спарсить данные пользователя Telegram')
+  if (!verifyTelegramWebAppData(initData, env.BOT_TOKEN)) {
+    throw unauthorized('Некорректные данные авторизации Telegram')
   }
+
+  let userJson: unknown
+
+  try {
+    userJson = JSON.parse(userRaw)
+  } catch {
+    throw badRequest('Данные пользователя Telegram должны быть валидным JSON')
+  }
+
+  const parsedUser = telegramWebAppUserSchema.safeParse(userJson)
+
+  if (!parsedUser.success) {
+    throw badRequest('Некорректные данные пользователя Telegram', parsedUser.error.flatten())
+  }
+
+  return parsedUser.data
 }
 
 export function parseTelegramWebAppUserFromInitData(

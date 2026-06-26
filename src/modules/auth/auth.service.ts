@@ -4,12 +4,12 @@ import { AuthRepository } from './auth.repository'
 import { Roles } from '../../common/types/domain'
 import { toPublicUser } from './auth.helpers'
 import { signAccessToken } from '../../common/utils/jwt'
-import { conflict, unauthorized } from '../../common/errors/app-error'
+import { AppError, conflict, internalServerError, unauthorized } from '../../common/errors/app-error'
 import { hashPassword, verifyPassword } from '../../common/utils/password'
 import { createAvailableTelegramNickname } from './auth.helpers'
 
 import type { Role } from '../../common/types/domain'
-import type { PrismaClient } from '@prisma/client'
+import { Prisma, type PrismaClient } from '@prisma/client'
 import type {
   NicknameAvailabilityDto,
   SignInDto,
@@ -88,40 +88,53 @@ export class AuthService {
   }
 
   async signInWithTelegram(dto: TelegramWebAppUserDto) {
-    const telegramId = String(dto.id)
-    let user = await this.repository.findByTelegramId(telegramId)
+    try {
+      const telegramId = String(dto.id)
+      let user = await this.repository.findByTelegramId(telegramId)
 
-    if (!user) {
-      const nickname = await createAvailableTelegramNickname(
-        dto?.username ?? `tg_user_${telegramId}`,
-        telegramId,
-        (nickname) => this.repository.findByNickname(nickname),
-      )
-      const passwordHash = await hashPassword('telegram-password')
+      if (!user) {
+        const nickname = await createAvailableTelegramNickname(
+          dto?.username ?? `tg_user_${telegramId}`,
+          telegramId,
+          (nickname) => this.repository.findByNickname(nickname),
+        )
+        const passwordHash = await hashPassword('telegram-password')
 
-      user = await this.repository.createUser({
-        telegramId,
-        passwordHash,
-        role: Roles.user,
-        email: `tg_${telegramId}@telegram.local`,
-        nickname,
-        phone: null,
-        avatarUrl: null,
+        user = await this.repository.createUser({
+          telegramId,
+          passwordHash,
+          role: Roles.user,
+          email: `tg_${telegramId}@telegram.local`,
+          nickname,
+          phone: null,
+          avatarUrl: null,
+        })
+      }
+
+      const token = signAccessToken({
+        id: user.id,
+        role: user.role as Role,
+        email: user.email,
+        nickname: user.nickname,
       })
-    }
 
-    const token = signAccessToken({
-      id: user.id,
-      role: user.role as Role,
-      email: user.email,
-      nickname: user.nickname,
-    })
+      await this.warmupService.startAbandonedRegistrationWarmup(user.id)
 
-    await this.warmupService.startAbandonedRegistrationWarmup(user.id)
+      return {
+        token,
+        user,
+      }
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error
+      }
 
-    return {
-      token,
-      user,
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw conflict('Пользователь с такими данными уже существует')
+      }
+
+      console.error('[AuthService] Telegram sign-in failed', error)
+      throw internalServerError('Не удалось авторизоваться через Telegram')
     }
   }
 }
