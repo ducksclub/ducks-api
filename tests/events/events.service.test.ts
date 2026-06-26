@@ -14,12 +14,14 @@ describe('EventsService', () => {
       count: vi.fn(),
     },
     user: { findUnique: vi.fn() },
+    userWarmup: { updateMany: vi.fn() },
     rating: { upsert: vi.fn() },
   }
   const prisma = {
     $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     event: tx.event,
     eventRegistration: tx.eventRegistration,
+    userWarmup: tx.userWarmup,
   }
 
   beforeEach(() => {

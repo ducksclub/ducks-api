@@ -43,6 +43,8 @@ export class AuthRepository {
         email: data.email,
         phone: data.phone ?? null,
         nickname: data.nickname,
+        avatarUrl: data.avatarUrl ?? null,
+        telegramId: data.telegramId ?? null,
         passwordHash: data.passwordHash,
       },
       select: publicUserSelect,
