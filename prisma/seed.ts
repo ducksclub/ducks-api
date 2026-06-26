@@ -33,119 +33,6 @@ async function main() {
   console.log('🌱 Seeding database...')
 
   /**
-   * PROMO LINKS
-   */
-  const telegramPromo = await prisma.promoLink.upsert({
-    where: {
-      code: 'telegram-main',
-    },
-    update: {
-      name: 'Telegram Main Promo',
-      type: 'TELEGRAM_BOT',
-      targetUrl: 'https://t.me/ducks_club_bot',
-      generatedUrl: 'https://t.me/ducks_club_bot?start=telegram-main',
-      isActive: true,
-    },
-    create: {
-      name: 'Telegram Main Promo',
-      code: 'telegram-main',
-      type: 'TELEGRAM_BOT',
-      targetUrl: 'https://t.me/ducks_club_bot',
-      generatedUrl: 'https://t.me/ducks_club_bot?start=telegram-main',
-      clicksCount: 3,
-      registrationsCount: 2,
-      isActive: true,
-    },
-  })
-
-  const publicPromo = await prisma.promoLink.upsert({
-    where: {
-      code: 'public-site',
-    },
-    update: {
-      name: 'Public Site Promo',
-      type: 'PUBLIC_SITE',
-      targetUrl: 'https://www.ducksclub.space',
-      generatedUrl: 'https://www.ducksclub.space?source=public-site',
-      isActive: true,
-    },
-    create: {
-      name: 'Public Site Promo',
-      code: 'public-site',
-      type: 'PUBLIC_SITE',
-      targetUrl: 'https://www.ducksclub.space',
-      generatedUrl: 'https://www.ducksclub.space?source=public-site',
-      clicksCount: 5,
-      registrationsCount: 1,
-      isActive: true,
-    },
-  })
-
-  /**
-   * PROMO SESSIONS / CLICKS
-   */
-  await prisma.promoStartSession.upsert({
-    where: {
-      telegramUserId: '100001',
-    },
-    update: {
-      promoCode: telegramPromo.code,
-      promoLinkId: telegramPromo.id,
-      type: 'TELEGRAM_BOT',
-    },
-    create: {
-      telegramUserId: '100001',
-      promoCode: telegramPromo.code,
-      promoLinkId: telegramPromo.id,
-      type: 'TELEGRAM_BOT',
-    },
-  })
-
-  await prisma.promoClick.upsert({
-    where: {
-      id: 'seed-promo-click-telegram-1',
-    },
-    update: {
-      promoLinkId: telegramPromo.id,
-      code: telegramPromo.code,
-      type: 'TELEGRAM_BOT',
-      telegramUserId: '100001',
-      ip: '127.0.0.1',
-      userAgent: 'Seed Bot',
-    },
-    create: {
-      id: 'seed-promo-click-telegram-1',
-      promoLinkId: telegramPromo.id,
-      code: telegramPromo.code,
-      type: 'TELEGRAM_BOT',
-      telegramUserId: '100001',
-      ip: '127.0.0.1',
-      userAgent: 'Seed Bot',
-    },
-  })
-
-  await prisma.promoClick.upsert({
-    where: {
-      id: 'seed-promo-click-public-1',
-    },
-    update: {
-      promoLinkId: publicPromo.id,
-      code: publicPromo.code,
-      type: 'PUBLIC_SITE',
-      ip: '127.0.0.1',
-      userAgent: 'Seed Browser',
-    },
-    create: {
-      id: 'seed-promo-click-public-1',
-      promoLinkId: publicPromo.id,
-      code: publicPromo.code,
-      type: 'PUBLIC_SITE',
-      ip: '127.0.0.1',
-      userAgent: 'Seed Browser',
-    },
-  })
-
-  /**
    * USERS
    */
   await prisma.user.upsert({
@@ -154,13 +41,13 @@ async function main() {
     },
     update: {
       role: 'admin',
-      username: 'admin',
+      nickname: 'admin',
       phone: '+77777777777',
     },
     create: {
       email: 'admin@ducks.com',
       role: 'admin',
-      username: 'admin',
+      nickname: 'admin',
       phone: '+77777777777',
       passwordHash: await hashPassword('Admin12345!'),
     },
@@ -172,21 +59,15 @@ async function main() {
     },
     update: {
       role: 'user',
-      username: 'testuser',
+      nickname: 'testuser',
       phone: '+77770000000',
-      promoLinkId: publicPromo.id,
-      sourceCode: publicPromo.code,
-      sourceType: 'PUBLIC_SITE',
     },
     create: {
       email: 'user@ducks.com',
       role: 'user',
-      username: 'testuser',
+      nickname: 'testuser',
       phone: '+77770000000',
       passwordHash: await hashPassword('User12345!'),
-      promoLinkId: publicPromo.id,
-      sourceCode: publicPromo.code,
-      sourceType: 'PUBLIC_SITE',
     },
   })
 
@@ -196,23 +77,17 @@ async function main() {
     },
     update: {
       role: 'user',
-      username: 'telegram_user',
+      nickname: 'telegram_user',
       phone: '+77770000001',
       telegramId: '100001',
-      promoLinkId: telegramPromo.id,
-      sourceCode: telegramPromo.code,
-      sourceType: 'TELEGRAM_BOT',
     },
     create: {
       email: 'telegram@ducks.com',
       role: 'user',
-      username: 'telegram_user',
+      nickname: 'telegram_user',
       phone: '+77770000001',
       telegramId: '100001',
       passwordHash: await hashPassword('User12345!'),
-      promoLinkId: telegramPromo.id,
-      sourceCode: telegramPromo.code,
-      sourceType: 'TELEGRAM_BOT',
     },
   })
 
@@ -226,13 +101,13 @@ async function main() {
         },
         update: {
           role: 'user',
-          username: `player_${number}`,
+          nickname: `player_${number}`,
           phone: `+777700001${String(number).padStart(2, '0')}`,
         },
         create: {
           email: `player${number}@ducks.com`,
           role: 'user',
-          username: `player_${number}`,
+          nickname: `player_${number}`,
           phone: `+777700001${String(number).padStart(2, '0')}`,
           passwordHash: await hashPassword('User12345!'),
         },
