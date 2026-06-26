@@ -6,6 +6,7 @@ import { toPublicUser } from './auth.helpers'
 import { signAccessToken } from '../../common/utils/jwt'
 import { conflict, unauthorized } from '../../common/errors/app-error'
 import { hashPassword, verifyPassword } from '../../common/utils/password'
+import { createAvailableTelegramNickname } from './auth.helpers'
 
 import type { Role } from '../../common/types/domain'
 import type { PrismaClient } from '@prisma/client'
@@ -91,6 +92,11 @@ export class AuthService {
     let user = await this.repository.findByTelegramId(telegramId)
 
     if (!user) {
+      const nickname = await createAvailableTelegramNickname(
+        dto?.username ?? `tg_user_${telegramId}`,
+        telegramId,
+        (nickname) => this.repository.findByNickname(nickname),
+      )
       const passwordHash = await hashPassword('telegram-password')
 
       user = await this.repository.createUser({
@@ -98,7 +104,7 @@ export class AuthService {
         passwordHash,
         role: Roles.user,
         email: `tg_${telegramId}@telegram.local`,
-        nickname: dto?.username ?? `tg_user_${telegramId}`,
+        nickname,
         phone: null,
         avatarUrl: null,
       })

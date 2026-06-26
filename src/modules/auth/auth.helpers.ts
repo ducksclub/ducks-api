@@ -1,7 +1,7 @@
 import { env } from '../../config/env'
 import { Prisma } from '@prisma/client'
 import { telegramWebAppUserSchema } from './auth.schemas'
-import { badRequest, unauthorized } from '../../common/errors/app-error'
+import { badRequest, conflict, unauthorized } from '../../common/errors/app-error'
 import { verifyTelegramWebAppData } from '../../common/utils/telegram-auth'
 import type { PublicUser, TelegramWebAppUserDto, UserWithPassword } from './auth.types'
 
@@ -57,4 +57,30 @@ export function toPublicUser(user: UserWithPassword): PublicUser {
   const { passwordHash, ...publicUser } = user
 
   return publicUser
+}
+
+const maxNicknameLength = 30
+const maxNicknameAttempts = 20
+
+type NicknameExists = (nickname: string) => Promise<unknown>
+
+export async function createAvailableTelegramNickname(
+  baseNickname: string,
+  telegramId: string,
+  nicknameExists: NicknameExists,
+) {
+  if (!(await nicknameExists(baseNickname))) {
+    return baseNickname
+  }
+
+  for (let attempt = 0; attempt < maxNicknameAttempts; attempt += 1) {
+    const suffix = attempt === 0 ? telegramId : `${telegramId}_${attempt}`
+    const nickname = `${baseNickname.slice(0, maxNicknameLength - suffix.length - 1)}_${suffix}`
+
+    if (!(await nicknameExists(nickname))) {
+      return nickname
+    }
+  }
+
+  throw conflict('Не удалось подобрать уникальный nickname')
 }
