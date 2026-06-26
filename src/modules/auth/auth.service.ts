@@ -44,16 +44,10 @@ export class AuthService {
 
   async signUp(dto: SignUpDto) {
     const userExists = await this.repository.findByEmail(dto.email)
-
-    if (userExists) {
-      throw conflict('Адрес электронной почты уже зарегистрирован')
-    }
+    if (userExists) throw conflict('Адрес электронной почты уже зарегистрирован')
 
     const nicknameExists = await this.repository.findByNickname(dto.nickname)
-
-    if (nicknameExists) {
-      throw conflict('Nickname уже зарегистрирован')
-    }
+    if (nicknameExists) throw conflict('Nickname уже зарегистрирован')
 
     const passwordHash = await hashPassword(dto.password)
     const createdUser = await this.repository.createUser({
