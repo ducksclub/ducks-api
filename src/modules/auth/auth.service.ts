@@ -49,6 +49,12 @@ export class AuthService {
       throw conflict('Адрес электронной почты уже зарегистрирован')
     }
 
+    const nicknameExists = await this.repository.findByNickname(dto.nickname)
+
+    if (nicknameExists) {
+      throw conflict('Nickname уже зарегистрирован')
+    }
+
     const passwordHash = await hashPassword(dto.password)
     const createdUser = await this.repository.createUser({
       role: Roles.user,

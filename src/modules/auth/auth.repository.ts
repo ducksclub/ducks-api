@@ -11,6 +11,12 @@ export class AuthRepository {
     })
   }
 
+  findByNickname(nickname: string) {
+    return this.prisma.user.findUnique({
+      where: { nickname },
+    })
+  }
+
   findByTelegramId(telegramId: string) {
     return this.prisma.user.findUnique({
       where: { telegramId },
