@@ -5,24 +5,20 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import path from 'path'
 
-import { env } from './config/env.js'
-import { errorHandler } from './common/middleware/error-handler.js'
-// import { apiRateLimiter } from './common/middleware/rate-limit.js'
+import { env } from './config/env'
+import { corsOptions } from './common/utils/cors'
+import { errorHandler } from './common/middleware/error-handler'
+import { apiRateLimiter } from './common/middleware/rate-limit'
 
-import { authRouter } from './modules/auth/auth.routes.js'
-import { contentRouter } from './modules/content/content.routes.js'
-import { eventsRouter } from './modules/events/events.routes.js'
-import { feedbackRouter } from './modules/feedback/feedback.routes.js'
-import { ratingsRouter } from './modules/ratings/ratings.routes.js'
-import { usersRouter } from './modules/users/users.routes.js'
-import { uploadRouter } from './modules/upload/upload.routes.js'
-import { contactRouter } from './modules/contact/contact.routes.js'
-import { broadcastRouter } from './modules/broadcasts/broadcast.routes.js'
-import {
-  adminPromoLinksRouter,
-  publicPromoLinksRouter,
-} from './modules/promo-links/promo-link.routes.js'
-import { corsOptions } from './common/utils/cors.js'
+import { authRouter } from './modules/auth/auth.routes'
+import { contentRouter } from './modules/content/content.routes'
+import { eventsRouter } from './modules/events/events.routes'
+import { feedbackRouter } from './modules/feedback/feedback.routes'
+import { ratingsRouter } from './modules/ratings/ratings.routes'
+import { usersRouter } from './modules/users/users.routes'
+import { uploadRouter } from './modules/upload/upload.routes'
+import { contactRouter } from './modules/contact/contact.routes'
+import { broadcastRouter } from './modules/broadcasts/broadcast.routes'
 
 export const app = express()
 
@@ -36,7 +32,7 @@ app.options(/.*/, cors(corsOptions))
 app.use(compression())
 app.use(express.json({ limit: '1mb' }))
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'))
-// app.use(apiRateLimiter)
+app.use(apiRateLimiter)
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' })
@@ -57,9 +53,6 @@ app.use('/api/ratings', ratingsRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/content', contentRouter)
 app.use('/api/broadcasts', broadcastRouter)
-
-app.use('/api/admin/promo-links', adminPromoLinksRouter)
-app.use('/api/promo-links', publicPromoLinksRouter)
 
 app.use((_req, res) => {
   res.status(404).json({
