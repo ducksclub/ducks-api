@@ -18,7 +18,7 @@ export class RatingsService {
             select: {
               id: true,
               email: true,
-              username: true,
+              nickname: true,
               avatarUrl: true,
             },
           },

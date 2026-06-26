@@ -31,16 +31,30 @@ model User {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  promoLink     PromoLink?          @relation(fields: [promoLinkId], references: [id], onDelete: SetNull)
-  registrations EventRegistration[]
-  ratings       Rating[]
-  feedback      Feedback[]
-  warmups       UserWarmup[]
+  promoLink           PromoLink?           @relation(fields: [promoLinkId], references: [id], onDelete: SetNull)
+  registrations       EventRegistration[]
+  ratings             Rating[]
+  feedback            Feedback[]
+  warmups             UserWarmup[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([role])
   @@index([promoLinkId])
   @@index([sourceCode])
   @@index([sourceType])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model PromoLink {

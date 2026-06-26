@@ -38,12 +38,27 @@ export class AuthRepository {
   findByTelegramId(telegramId: string) {
     return this.prisma.user.findUnique({
       where: { telegramId },
-      omit: {
-        passwordHash: true,
-        sourceCode: true,
-        sourceType: true,
-        promoLinkId: true,
-      },
+      select: publicUserSelect,
+    })
+  }
+
+  updatePassword(userId: string, passwordHash: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+      select: publicUserSelect,
+    })
+  }
+
+  createPasswordResetToken(data: { userId: string; tokenHash: string; expiresAt: Date }) {
+    return this.prisma.passwordResetToken.create({
+      data,
+    })
+  }
+
+  findPasswordResetToken(tokenHash: string) {
+    return this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
     })
   }
 

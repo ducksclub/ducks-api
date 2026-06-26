@@ -1,25 +1,44 @@
 import { WarmupService } from '../warmups/warmup.service'
+import { AuthEmailService } from './auth-email.service'
 import { AuthRepository } from './auth.repository'
 
 import { Roles } from '../../common/types/domain'
-import { toPublicUser } from './auth.helpers'
+import {
+  buildPasswordResetUrl,
+  createPasswordResetToken,
+  hashPasswordResetToken,
+  toPublicUser,
+} from './auth.helpers'
 import { signAccessToken } from '../../common/utils/jwt'
-import { AppError, conflict, internalServerError, unauthorized } from '../../common/errors/app-error'
+import {
+  AppError,
+  badRequest,
+  conflict,
+  internalServerError,
+  unauthorized,
+} from '../../common/errors/app-error'
 import { hashPassword, verifyPassword } from '../../common/utils/password'
 import { createAvailableTelegramNickname } from './auth.helpers'
 
 import type { Role } from '../../common/types/domain'
 import { Prisma, type PrismaClient } from '@prisma/client'
 import type {
+  ForgotPasswordDto,
   NicknameAvailabilityDto,
+  ResetPasswordDto,
   SignInDto,
   SignUpDto,
   TelegramWebAppUserDto,
 } from './auth.types'
 
+const PASSWORD_RESET_TOKEN_TTL_MS = 30 * 60 * 1000
+const PASSWORD_RESET_REQUEST_MESSAGE =
+  'Если указанный email зарегистрирован, мы отправим письмо для восстановления пароля'
+
 export class AuthService {
   private readonly repository: AuthRepository
   private readonly warmupService: WarmupService
+  private readonly emailService = new AuthEmailService()
 
   constructor(private readonly prisma: PrismaClient) {
     this.repository = new AuthRepository(prisma)
@@ -85,6 +104,97 @@ export class AuthService {
     return {
       available: !user,
     }
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.repository.findByEmail(dto.email)
+
+    if (!user || user.email.endsWith('@telegram.local')) {
+      return { message: PASSWORD_RESET_REQUEST_MESSAGE }
+    }
+
+    const token = createPasswordResetToken()
+    const tokenHash = hashPasswordResetToken(token)
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + PASSWORD_RESET_TOKEN_TTL_MS)
+
+    await this.prisma.$transaction([
+      this.prisma.passwordResetToken.updateMany({
+        where: {
+          userId: user.id,
+          usedAt: null,
+        },
+        data: {
+          usedAt: now,
+        },
+      }),
+
+      this.repository.createPasswordResetToken({
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+      }),
+    ])
+
+    try {
+      await this.emailService.sendPasswordResetMail({
+        email: user.email,
+        resetUrl: buildPasswordResetUrl(token),
+      })
+    } catch (error) {
+      console.error('[AuthService] Password reset email failed', error)
+      throw internalServerError('Не удалось отправить письмо для восстановления пароля')
+    }
+
+    return { message: PASSWORD_RESET_REQUEST_MESSAGE }
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const tokenHash = hashPasswordResetToken(dto.token)
+    const now = new Date()
+    const token = await this.repository.findPasswordResetToken(tokenHash)
+
+    if (!token || token.usedAt || token.expiresAt <= now) {
+      throw badRequest('Ссылка для восстановления пароля недействительна или устарела')
+    }
+
+    const passwordHash = await hashPassword(dto.password)
+
+    await this.prisma.$transaction(async (tx) => {
+      const consumedToken = await tx.passwordResetToken.updateMany({
+        where: {
+          id: token.id,
+          usedAt: null,
+          expiresAt: {
+            gt: now,
+          },
+        },
+        data: {
+          usedAt: now,
+        },
+      })
+
+      if (consumedToken.count !== 1) {
+        throw badRequest('Ссылка для восстановления пароля недействительна или устарела')
+      }
+
+      await tx.user.update({
+        where: { id: token.userId },
+        data: { passwordHash },
+      })
+
+      await tx.passwordResetToken.updateMany({
+        where: {
+          userId: token.userId,
+          usedAt: null,
+        },
+        data: {
+          usedAt: now,
+        },
+      })
+    })
+
+    return { message: 'Пароль успешно изменен' }
   }
 
   async signInWithTelegram(dto: TelegramWebAppUserDto) {

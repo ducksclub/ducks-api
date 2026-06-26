@@ -82,7 +82,7 @@ async function sendReminderToEventParticipants(event: any, reminder: ReminderCon
       await notificationQueue.enqueue({
         type: 'event_reminder',
         telegramUserId: Number(telegramId),
-        message: createEventReminderMessage(event, reminder.type, registration.user.username),
+        message: createEventReminderMessage(event, reminder.type, registration.user.nickname),
       })
     } catch (error) {
       console.error('Failed to send event reminder:', {

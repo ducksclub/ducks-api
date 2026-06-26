@@ -19,7 +19,7 @@ export class FeedbackService {
       this.prisma.feedback.findMany({
         ...getPagination(query),
         orderBy: { createdAt: 'desc' },
-        include: { user: { select: { id: true, email: true, username: true } } },
+        include: { user: { select: { id: true, email: true, nickname: true } } },
       }),
       this.prisma.feedback.count(),
     ])

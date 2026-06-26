@@ -19,7 +19,6 @@ export function mapCreateEventData(dto: CreateEventDto): Prisma.EventCreateInput
     endsAt: dto.endsAt ?? null,
     participantLimit: dto.participantLimit,
     seatsPerTable: dto.seatsPerTable,
-    pointsForParticipation: dto.pointsForParticipation,
     initialDepositAmount: dto.initialDepositAmount,
     status: dto.status,
     isTemplate: dto.isTemplate ?? false,
@@ -43,9 +42,6 @@ export function mapUpdateEventData(dto: UpdateEventDto): Prisma.EventUpdateInput
     }),
     ...(dto.seatsPerTable !== undefined && {
       seatsPerTable: dto.seatsPerTable,
-    }),
-    ...(dto.pointsForParticipation !== undefined && {
-      pointsForParticipation: dto.pointsForParticipation,
     }),
     ...(dto.initialDepositAmount !== undefined && {
       initialDepositAmount: dto.initialDepositAmount,

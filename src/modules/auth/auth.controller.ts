@@ -21,6 +21,16 @@ export class AuthController {
     res.json(data)
   }
 
+  forgotPassword = async (req: Request, res: Response) => {
+    const data = await this.service.forgotPassword(req.body)
+    res.json(data)
+  }
+
+  resetPassword = async (req: Request, res: Response) => {
+    const data = await this.service.resetPassword(req.body)
+    res.json(data)
+  }
+
   signInWithTelegram = async (req: Request, res: Response) => {
     const telegramUser = getTelegramWebAppUserFromInitData(req.body.initData)
     const data = await this.service.signInWithTelegram(telegramUser)

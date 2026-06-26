@@ -12,6 +12,15 @@ export const signUpSchema = z.object({
   phone: z.string().trim().min(6).max(30).optional(),
 })
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email().toLowerCase(),
+})
+
+export const resetPasswordSchema = z.object({
+  token: z.string().trim().min(32).max(256),
+  password: z.string().min(8).max(128),
+})
+
 export const signInWithTelegramSchema = z.object({
   initData: z.string().min(1),
 })

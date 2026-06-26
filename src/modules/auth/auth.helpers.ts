@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import { env } from '../../config/env'
 import { Prisma } from '@prisma/client'
 import { telegramWebAppUserSchema } from './auth.schemas'
@@ -102,4 +103,19 @@ export async function createAvailableTelegramNickname(
   }
 
   throw conflict('Не удалось подобрать уникальный nickname')
+}
+
+export function createPasswordResetToken() {
+  return crypto.randomBytes(32).toString('base64url')
+}
+
+export function hashPasswordResetToken(token: string) {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
+
+export function buildPasswordResetUrl(token: string) {
+  const url = new URL('/reset-password', env.PUBLIC_SITE_URL)
+  url.searchParams.set('token', token)
+
+  return url.toString()
 }
