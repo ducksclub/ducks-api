@@ -32,8 +32,8 @@ import type {
 } from './auth.types'
 
 const PASSWORD_RESET_TOKEN_TTL_MS = 30 * 60 * 1000
-const PASSWORD_RESET_REQUEST_MESSAGE =
-  'Если указанный email зарегистрирован, мы отправим письмо для восстановления пароля'
+const PASSWORD_RESET_REQUEST_MESSAGE = 'Мы отправили письмо для восстановления пароля'
+const PASSWORD_RESET_FAILED_REQUEST_MESSAGE = 'Аккаунт с указанной почтой не найден'
 
 export class AuthService {
   private readonly repository: AuthRepository
@@ -110,7 +110,7 @@ export class AuthService {
     const user = await this.repository.findByEmail(dto.email)
 
     if (!user || user.email.endsWith('@telegram.local')) {
-      return { message: PASSWORD_RESET_REQUEST_MESSAGE }
+      return { message: PASSWORD_RESET_FAILED_REQUEST_MESSAGE }
     }
 
     const token = createPasswordResetToken()
