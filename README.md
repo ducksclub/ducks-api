@@ -15,6 +15,10 @@ npm run dev
 
 API documentation is available at `http://localhost:4000/docs`.
 
+## Module Documentation
+
+- [Auth module](src/modules/auth/README.md)
+
 ## Scripts
 
 - `npm run dev` - start development server with watch mode
