@@ -1,16 +1,16 @@
-import { notFound } from '../../../common/errors/app-error.js'
-import { paginated } from '../../../common/utils/pagination.js'
-import { EventRegistrationsService } from '../registrations/event-registrations.service.js'
-import { EventRemindersService } from '../reminders/event-reminders.service.js'
-import { EventResultsService } from '../results/event-results.service.js'
-import { buildEventListWhere, buildMyEventListWhere } from './events.helper.js'
+import { notFound } from '../../../common/errors/app-error'
+import { paginated } from '../../../common/utils/pagination'
+import { EventRegistrationsService } from '../registrations/event-registrations.service'
+import { EventRemindersService } from '../reminders/event-reminders.service'
+import { EventResultsService } from '../results/event-results.service'
+import { buildEventListWhere, buildMyEventListWhere } from './events.helper'
 import {
   mapCreateEventData,
   mapEventReminderResponse,
   mapEventWithPokerSeatLayout,
   mapUpdateEventData,
-} from './events.mapper.js'
-import { EventsRepository } from './events.repository.js'
+} from './events.mapper'
+import { EventsRepository } from './events.repository'
 import type {
   CreateEventDto,
   EventIdParams,
@@ -19,8 +19,8 @@ import type {
   EventReminderType,
   ReorderParticipantsDto,
   UpdateEventDto,
-} from '../events.types.js'
-import { PokerSeatsService } from '../poker-seats/poker-seats.service.js'
+} from '../events.types'
+import { PokerSeatsService } from '../poker-seats/poker-seats.service'
 
 export class EventsService {
   private readonly repository: EventsRepository
@@ -48,21 +48,8 @@ export class EventsService {
 
   async list(query: EventListQuery) {
     const where = buildEventListWhere(query, false)
-    const pagination = {
-      page: query.page,
-      limit: query.limit,
-    }
-
-    const [events, total] = await this.repository.listWithTotal(
-      this.repository.findManyWithCounts(where, query),
-      this.repository.countMany(where),
-    )
-
-    return paginated(
-      events.map((event) => mapEventWithPokerSeatLayout(event)),
-      total,
-      pagination,
-    )
+    const events = await this.repository.findManyWithCounts(where)
+    return events.map((event) => mapEventWithPokerSeatLayout(event))
   }
 
   async listTemplates(query: EventListQuery) {
@@ -82,21 +69,9 @@ export class EventsService {
 
   async listMy(query: EventListQuery, userId: string) {
     const where = buildMyEventListWhere(query, userId)
-    const pagination = {
-      page: query.page,
-      limit: query.limit,
-    }
+    const events = await this.repository.findManyWithCounts(where)
 
-    const [events, total] = await this.repository.listWithTotal(
-      this.repository.findManyWithCounts(where, query),
-      this.repository.countMany(where),
-    )
-
-    return paginated(
-      events.map((event) => mapEventWithPokerSeatLayout(event)),
-      total,
-      pagination,
-    )
+    return events.map((event) => mapEventWithPokerSeatLayout(event))
   }
 
   async create(dto: CreateEventDto) {

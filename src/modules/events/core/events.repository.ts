@@ -33,11 +33,14 @@ export class EventsRepository {
     return this.findByIdWithCounts(id)
   }
 
-  findManyWithCounts(where: Prisma.EventWhereInput, pagination: EventListQuery) {
+  findManyWithCounts(where: Prisma.EventWhereInput) {
     return this.prisma.event.findMany({
       where,
-      ...getPagination(pagination),
       orderBy: { startsAt: 'asc' },
+      omit: {
+        imageHash: true,
+        isTemplate: true,
+      },
       include: registeredCountInclude,
     })
   }
