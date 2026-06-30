@@ -3,11 +3,22 @@ import { z } from 'zod'
 
 dotenv.config()
 
+const booleanEnvSchema = z.preprocess((value) => {
+  if (typeof value !== 'string') return value
+
+  const normalized = value.trim().toLowerCase()
+
+  if (['true', '1', 'yes', 'on'].includes(normalized)) return true
+  if (['false', '0', 'no', 'off'].includes(normalized)) return false
+
+  return value
+}, z.boolean())
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().min(1),
-  ENABLE_JOBS: z.coerce.boolean().default(false),
+  ENABLE_JOBS: booleanEnvSchema.default(false),
 
   JWT_SECRET: z.string().min(24, 'JWT_SECRET must be at least 24 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
