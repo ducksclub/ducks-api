@@ -13,30 +13,48 @@ enum PromoLinkType {
 }
 
 model User {
-  id            String              @id @default(cuid())
-  avatarUrl     String?
-  avatarHash    String?
-  email         String              @unique
-  passwordHash  String
-  username      String?             @unique
-  phone         String?
-  telegramId    String?             @unique
-  promoLinkId   String?
-  sourceCode    String?
-  sourceType    PromoLinkType?
-  role          String              @default("user")
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  promoLink     PromoLink?          @relation(fields: [promoLinkId], references: [id], onDelete: SetNull)
-  registrations EventRegistration[]
-  ratings       Rating[]
-  feedback      Feedback[]
-  warmups       UserWarmup[]
+  id         String  @id @default(cuid())
+  telegramId String? @unique
+
+  email        String @unique
+  nickname     String @unique
+  role         String @default("user")
+  passwordHash String
+
+  phone      String?
+  avatarUrl  String?
+  avatarHash String?
+
+  promoLinkId String?
+  sourceCode  String?
+  sourceType  PromoLinkType?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  promoLink           PromoLink?           @relation(fields: [promoLinkId], references: [id], onDelete: SetNull)
+  registrations       EventRegistration[]
+  ratings             Rating[]
+  feedback            Feedback[]
+  warmups             UserWarmup[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([role])
   @@index([promoLinkId])
   @@index([sourceCode])
   @@index([sourceType])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model PromoLink {
@@ -94,30 +112,29 @@ model PromoClick {
 }
 
 model Event {
-  id                     String              @id @default(cuid())
-  imageUrl               String?
-  imageHash              String?
-  title                  String
-  city                   String
-  address                String
-  features               String
-  gameRules              String
-  gameType               String
-  startsAt               DateTime
-  endsAt                 DateTime?
-  reminderSentNow        Boolean             @default(false)
-  reminderSent24h        Boolean             @default(false)
-  reminderSent2h         Boolean             @default(false)
-  reminderSent15m        Boolean             @default(false)
-  participantLimit       Int
-  seatsPerTable          Int                 @default(9)
-  pointsForParticipation Int                 @default(10)
-  initialDepositAmount   Int                 @default(0)
-  isTemplate             Boolean?            @default(false)
-  status                 String              @default("published")
-  createdAt              DateTime            @default(now())
-  updatedAt              DateTime            @updatedAt
-  registrations          EventRegistration[]
+  id                   String              @id @default(cuid())
+  imageUrl             String?
+  imageHash            String?
+  title                String
+  city                 String
+  address              String
+  features             String
+  gameRules            String
+  gameType             String
+  startsAt             DateTime
+  endsAt               DateTime?
+  reminderSentNow      Boolean             @default(false)
+  reminderSent24h      Boolean             @default(false)
+  reminderSent2h       Boolean             @default(false)
+  reminderSent15m      Boolean             @default(false)
+  participantLimit     Int
+  seatsPerTable        Int                 @default(9)
+  initialDepositAmount Int                 @default(0)
+  isTemplate           Boolean?            @default(false)
+  status               String              @default("published")
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  registrations        EventRegistration[]
 
   @@index([gameType, startsAt])
   @@index([status])

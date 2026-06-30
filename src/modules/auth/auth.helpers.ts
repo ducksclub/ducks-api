@@ -1,26 +1,46 @@
+import crypto from 'node:crypto'
 import { env } from '../../config/env'
 import { Prisma } from '@prisma/client'
 import { telegramWebAppUserSchema } from './auth.schemas'
-import { badRequest, unauthorized } from '../../common/errors/app-error'
+import { badRequest, conflict, unauthorized } from '../../common/errors/app-error'
 import { verifyTelegramWebAppData } from '../../common/utils/telegram-auth'
 import type { PublicUser, TelegramWebAppUserDto, UserWithPassword } from './auth.types'
 
 function parseTelegramWebAppUser(initData: string): TelegramWebAppUserDto {
-  if (!verifyTelegramWebAppData(initData, env.BOT_TOKEN)) {
-    throw unauthorized('Некорректные данные авторизации Telegram')
+  const params = new URLSearchParams(initData)
+  const hash = params.get('hash')
+  const authDate = params.get('auth_date')
+  const userRaw = params.get('user')
+
+  if (!hash) {
+    throw badRequest('Hash авторизации Telegram отсутствует')
   }
-
-  const userRaw = new URLSearchParams(initData).get('user')
-
+  if (!authDate) {
+    throw badRequest('Дата авторизации Telegram отсутствует')
+  }
   if (!userRaw) {
     throw badRequest('Данные пользователя Telegram отсутствуют')
   }
 
-  try {
-    return telegramWebAppUserSchema.parse(JSON.parse(userRaw))
-  } catch {
-    throw badRequest('Некорректные данные пользователя Telegram')
+  if (!verifyTelegramWebAppData(initData, env.BOT_TOKEN)) {
+    throw unauthorized('Некорректные данные авторизации Telegram')
   }
+
+  let userJson: unknown
+
+  try {
+    userJson = JSON.parse(userRaw)
+  } catch {
+    throw badRequest('Данные пользователя Telegram должны быть валидным JSON')
+  }
+
+  const parsedUser = telegramWebAppUserSchema.safeParse(userJson)
+
+  if (!parsedUser.success) {
+    throw badRequest('Некорректные данные пользователя Telegram', parsedUser.error.flatten())
+  }
+
+  return parsedUser.data
 }
 
 export function parseTelegramWebAppUserFromInitData(
@@ -42,12 +62,9 @@ export const publicUserSelect = {
   role: true,
   email: true,
   phone: true,
-  username: true,
+  nickname: true,
   avatarUrl: true,
   telegramId: true,
-  sourceCode: true,
-  sourceType: true,
-  promoLinkId: true,
 } satisfies Prisma.UserSelect
 
 export const userWithPasswordSelect = {
@@ -60,4 +77,45 @@ export function toPublicUser(user: UserWithPassword): PublicUser {
   const { passwordHash, ...publicUser } = user
 
   return publicUser
+}
+
+const maxNicknameLength = 30
+const maxNicknameAttempts = 20
+
+type NicknameExists = (nickname: string) => Promise<unknown>
+
+export async function createAvailableTelegramNickname(
+  baseNickname: string,
+  telegramId: string,
+  nicknameExists: NicknameExists,
+) {
+  if (!(await nicknameExists(baseNickname))) {
+    return baseNickname
+  }
+
+  for (let attempt = 0; attempt < maxNicknameAttempts; attempt += 1) {
+    const suffix = attempt === 0 ? telegramId : `${telegramId}_${attempt}`
+    const nickname = `${baseNickname.slice(0, maxNicknameLength - suffix.length - 1)}_${suffix}`
+
+    if (!(await nicknameExists(nickname))) {
+      return nickname
+    }
+  }
+
+  throw conflict('Не удалось подобрать уникальный nickname')
+}
+
+export function createPasswordResetToken() {
+  return crypto.randomBytes(32).toString('base64url')
+}
+
+export function hashPasswordResetToken(token: string) {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
+
+export function buildPasswordResetUrl(token: string) {
+  const url = new URL('/reset-password', env.PUBLIC_SITE_URL)
+  url.searchParams.set('token', token)
+
+  return url.toString()
 }

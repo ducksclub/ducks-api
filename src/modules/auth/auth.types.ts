@@ -1,10 +1,20 @@
 import z from 'zod'
 import { publicUserSelect, userWithPasswordSelect } from './auth.helpers'
-import { signInSchema, signUpSchema, telegramWebAppUserSchema } from './auth.schemas'
+import {
+  forgotPasswordSchema,
+  nicknameAvailabilitySchema,
+  resetPasswordSchema,
+  signInSchema,
+  signUpSchema,
+  telegramWebAppUserSchema,
+} from './auth.schemas'
 import type { Prisma } from '@prisma/client'
 
 export type SignInDto = z.infer<typeof signInSchema>
 export type SignUpDto = z.infer<typeof signUpSchema>
+export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>
+export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>
+export type NicknameAvailabilityDto = z.infer<typeof nicknameAvailabilitySchema>
 export type TelegramWebAppUserDto = z.infer<typeof telegramWebAppUserSchema>
 
 export type PublicUser = Prisma.UserGetPayload<{

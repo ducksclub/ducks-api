@@ -1,4 +1,3 @@
-import jwt from 'jsonwebtoken'
 import crypto from 'node:crypto'
 
 const telegramProductionPublicKey =
@@ -75,15 +74,4 @@ function base64UrlToBase64(value: string) {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)
 
   return `${base64}${padding}`
-}
-
-type Payload = {
-  id: string
-  role: string
-}
-
-export function generateToken(payload: Payload) {
-  return jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: '30d',
-  })
 }

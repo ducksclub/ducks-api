@@ -1,38 +1,22 @@
-import type { PrismaClient } from '@prisma/client'
 import { notFound } from '../../common/errors/app-error'
-import { UpdateProfileDto } from './users.schemas'
-import { PromoLinkService } from '../promo-links/promo-link.service'
-
-export type CreateUserDto = {
-  telegramId: string
-  username?: string | null
-  promoCode?: string | null
-  sourceCode?: string | null
-}
+import { AuthRepository } from '../auth/auth.repository'
+import { UsersRepository } from './users.repository'
+import type { PrismaClient } from '@prisma/client'
+import type { UpdateProfileDto } from './users.schemas'
+import { UserWithPassword } from '../auth/auth.types'
 
 export class UsersService {
-  constructor(private readonly prisma: PrismaClient) {}
+  private readonly authRepository: AuthRepository
+  private readonly repository: UsersRepository
+
+  constructor(private readonly prisma: PrismaClient) {
+    this.repository = new UsersRepository(prisma)
+    this.authRepository = new AuthRepository(prisma)
+  }
 
   async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        avatarUrl: true,
-        telegramId: true,
-        email: true,
-        role: true,
-        phone: true,
-        promoLinkId: true,
-        sourceCode: true,
-        sourceType: true,
-        username: true,
-        createdAt: true,
-        updatedAt: true,
-        ratings: { select: { gameType: true, points: true } },
-      },
-    })
-    if (!user) throw notFound('User not found')
+    const user = await this.authRepository.findById(userId)
+    if (!user) throw notFound('Пользователь не найден')
     return user
   }
 
@@ -40,95 +24,27 @@ export class UsersService {
     const data = Object.fromEntries(
       Object.entries({
         phone: dto.phone,
-        username: dto.username,
+        nickname: dto.nickname,
         avatarUrl: dto.avatarUrl,
         avatarHash: dto.avatarHash,
       }).filter(([, v]) => v !== undefined),
-    )
+    ) as Omit<UserWithPassword, 'id' | 'passwordHash' | 'email'>
 
-    const user = await this.prisma.user.update({
-      data,
-      where: { id: userId },
-      select: {
-        id: true,
-        avatarUrl: true,
-        telegramId: true,
-        email: true,
-        role: true,
-        phone: true,
-        promoLinkId: true,
-        sourceCode: true,
-        sourceType: true,
-        username: true,
-        createdAt: true,
-        updatedAt: true,
-        ratings: { select: { gameType: true, points: true } },
-      },
-    })
-    if (!user) throw notFound('User not found')
+    const user = await this.repository.updateUser(userId, data)
+
+    if (!user) throw notFound('Пользователь не найден')
     return user
   }
 
   async getProfileByTelegramId(telegramId: string) {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        telegramId: telegramId,
-      },
-    })
-
-    if (!user) throw notFound('User not found')
+    const user = await this.authRepository.findByTelegramId(telegramId)
+    if (!user) throw notFound('Пользователь не найден')
     return user
   }
 
-  async createUserService(data: CreateUserDto) {
-    const { telegramId, username } = data
-    const promoLinkService = new PromoLinkService(this.prisma)
-    const explicitPromoCode = data.promoCode ?? data.sourceCode ?? null
-
-    const user = await this.prisma.$transaction(async (tx) => {
-      const existing = await tx.user.findUnique({
-        where: { telegramId },
-        select: { id: true, promoLinkId: true, sourceCode: true, sourceType: true },
-      })
-
-      const promoLink = await promoLinkService.findActivePromoForRegistration(
-        tx,
-        explicitPromoCode,
-        telegramId,
-      )
-
-      if (existing) {
-        if (promoLink && !existing.promoLinkId && !existing.sourceCode && !existing.sourceType) {
-          await promoLinkService.attachPromoToExistingUser(tx, existing.id, promoLink)
-        }
-
-        return tx.user.update({
-          where: { telegramId },
-          data: {
-            ...(username ? { username } : {}),
-          },
-        })
-      }
-
-      const createdUser = await tx.user.create({
-        data: {
-          telegramId,
-          username: username ?? null,
-          email: `tg_${telegramId}@duck.local`,
-          passwordHash: 'telegram-auth',
-          promoLinkId: promoLink?.id ?? null,
-          sourceCode: promoLink?.code ?? null,
-          sourceType: promoLink?.type ?? null,
-        },
-      })
-
-      if (promoLink) {
-        await promoLinkService.incrementRegistration(tx, promoLink.id)
-      }
-
-      return createdUser
-    })
-
+  async getProfileByNickname(nickname: string) {
+    const user = await this.authRepository.findByNickname(nickname)
+    if (!user) throw notFound('Пользователь не найден')
     return user
   }
 }
