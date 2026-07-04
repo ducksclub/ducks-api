@@ -4,6 +4,7 @@ import { asyncHandler } from '../../common/utils/async-handler'
 import { UserController } from './users.controller'
 import { validate } from '../../common/middleware/validate'
 import {
+  getProfileByIdParamsSchema,
   getProfileByNicknameQuerySchema,
   getProfileByTelegramIdParamsSchema,
   updateProfileSchema,
@@ -29,4 +30,10 @@ usersRouter.get(
   authenticate,
   validate({ query: getProfileByNicknameQuerySchema }),
   asyncHandler(userController.getProfileByNickname),
+)
+usersRouter.get(
+  '/:id',
+  authenticate,
+  validate({ params: getProfileByIdParamsSchema }),
+  asyncHandler(userController.getProfileById),
 )

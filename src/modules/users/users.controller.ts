@@ -2,7 +2,11 @@ import type { Request, Response } from 'express'
 import { unauthorized } from '../../common/errors/app-error'
 import { prisma } from '../../prisma/client'
 import { UsersService } from './users.service'
-import type { GetProfileByNicknameQueryDto, GetProfileByTelegramIdParamsDto } from './users.schemas'
+import type {
+  GetProfileByIdParamsDto,
+  GetProfileByNicknameQueryDto,
+  GetProfileByTelegramIdParamsDto,
+} from './users.schemas'
 
 export class UserController {
   private readonly service = new UsersService(prisma)
@@ -17,6 +21,12 @@ export class UserController {
     if (!req.user) throw unauthorized()
     const updatedProfile = await this.service.updateProfile(req.body, req.user.id)
     res.json(updatedProfile)
+  }
+
+  getProfileById = async (req: Request, res: Response) => {
+    const { id } = req.params as GetProfileByIdParamsDto
+    const profile = await this.service.getPublicProfile(id)
+    res.json(profile)
   }
 
   getMeByTelegramId = async (req: Request, res: Response) => {

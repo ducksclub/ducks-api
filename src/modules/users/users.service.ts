@@ -20,6 +20,12 @@ export class UsersService {
     return user
   }
 
+  async getPublicProfile(userId: string) {
+    const user = await this.repository.findProfileById(userId)
+    if (!user) throw notFound('Пользователь не найден')
+    return user
+  }
+
   async updateProfile(dto: UpdateProfileDto, userId: string) {
     const data = Object.fromEntries(
       Object.entries({

@@ -33,6 +33,11 @@ export const getProfileByTelegramIdParamsSchema = z.object({
   telegramId: z.string().trim().min(1, 'telegramId обязателен'),
 })
 
+export const getProfileByIdParamsSchema = z.object({
+  id: z.string().trim().min(1, 'id пользователя обязателен'),
+})
+
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>
 export type GetProfileByNicknameQueryDto = z.infer<typeof getProfileByNicknameQuerySchema>
 export type GetProfileByTelegramIdParamsDto = z.infer<typeof getProfileByTelegramIdParamsSchema>
+export type GetProfileByIdParamsDto = z.infer<typeof getProfileByIdParamsSchema>
