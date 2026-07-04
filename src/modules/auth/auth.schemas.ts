@@ -22,7 +22,7 @@ export const resetPasswordSchema = z.object({
 })
 
 export const signInWithTelegramSchema = z.object({
-  initData: z.string().min(1),
+  idToken: z.string().min(1),
 })
 
 export const telegramWebAppUserSchema = z.object({

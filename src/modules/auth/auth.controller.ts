@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express'
 import { prisma } from '../../prisma/client'
 import { AuthService } from './auth.service'
-import { getTelegramWebAppUserFromInitData } from './auth.helpers'
 
 export class AuthController {
   private readonly service = new AuthService(prisma)
@@ -32,9 +31,7 @@ export class AuthController {
   }
 
   signInWithTelegram = async (req: Request, res: Response) => {
-    const telegramUser = getTelegramWebAppUserFromInitData(req.body.initData)
-    const data = await this.service.signInWithTelegram(telegramUser)
-
+    const data = await this.service.signInWithTelegram(req.body)
     res.json(data)
   }
 }
