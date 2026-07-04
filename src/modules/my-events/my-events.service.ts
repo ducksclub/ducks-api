@@ -1,20 +1,19 @@
 import { PrismaClient } from '@prisma/client'
-import { EventsRepository } from '../events/events.repository'
-import { EventListQuery } from '../events/events.types'
+import { MyEventsRepository } from './my-events.repository'
 import { buildMyEventListWhere } from './my-events.helpers'
-import { mapEventWithPokerSeatLayout } from '../events/events.mapper'
+import type { MyEventsQuery } from './my-events.types'
 
 export class MyEventsService {
-  private readonly repository: EventsRepository
+  private readonly repository: MyEventsRepository
 
   constructor(prisma: PrismaClient) {
-    this.repository = new EventsRepository(prisma)
+    this.repository = new MyEventsRepository(prisma)
   }
 
-  async list(query: EventListQuery, userId: string) {
+  async list(query: MyEventsQuery, userId: string) {
     const where = buildMyEventListWhere(query, userId)
-    const events = await this.repository.findManyWithCounts(where)
+    const events = await this.repository.findMany(where)
 
-    return events.map((event) => mapEventWithPokerSeatLayout(event))
+    return events
   }
 }

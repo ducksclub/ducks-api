@@ -1,7 +1,7 @@
+import { MyEventsQuery } from './my-events.types'
 import { RegistrationStatuses } from '../../common/types/domain'
-import type { EventListQuery } from '../events/events.types'
 
-export function buildMyEventListWhere(query: EventListQuery, userId: string) {
+export function buildMyEventListWhere(query: MyEventsQuery, userId: string) {
   return {
     ...(query.gameType && {
       gameType: query.gameType,
