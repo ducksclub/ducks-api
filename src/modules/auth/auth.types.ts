@@ -5,6 +5,7 @@ import {
   nicknameAvailabilitySchema,
   resetPasswordSchema,
   signInSchema,
+  signInWithTelegramOidcSchema,
   signInWithTelegramSchema,
   signUpSchema,
   telegramWebAppUserSchema,
@@ -18,6 +19,7 @@ export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>
 export type NicknameAvailabilityDto = z.infer<typeof nicknameAvailabilitySchema>
 export type TelegramWebAppUserDto = z.infer<typeof telegramWebAppUserSchema>
 export type SignInWithTelegramDto = z.infer<typeof signInWithTelegramSchema>
+export type SignInWithTelegramOidcDto = z.infer<typeof signInWithTelegramOidcSchema>
 
 export type PublicUser = Prisma.UserGetPayload<{
   select: typeof publicUserSelect

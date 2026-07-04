@@ -7,6 +7,7 @@ import {
   forgotPasswordSchema,
   signInSchema,
   signUpSchema,
+  signInWithTelegramOidcSchema,
   signInWithTelegramSchema,
   nicknameAvailabilitySchema,
   resetPasswordSchema,
@@ -39,6 +40,11 @@ authRouter.post(
   '/signin-with-telegram',
   validate({ body: signInWithTelegramSchema }),
   asyncHandler(controller.signInWithTelegram),
+)
+authRouter.post(
+  '/telegram/oidc',
+  validate({ body: signInWithTelegramOidcSchema }),
+  asyncHandler(controller.signInWithTelegramOidc),
 )
 authRouter.get(
   '/nickname/availability',

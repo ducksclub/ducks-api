@@ -57,6 +57,59 @@ Authorization: Bearer <token>
 
 ## Endpoints
 
+### `POST /api/auth/telegram/oidc`
+
+Завершает Telegram Login через OpenID Connect Authorization Code Flow with PKCE.
+
+Request body:
+
+```json
+{
+  "code": "<telegram_authorization_code>",
+  "codeVerifier": "<pkce_code_verifier>",
+  "redirectUri": "https://YOUR_DOMAIN/auth/telegram/callback",
+  "nonce": "<nonce>"
+}
+```
+
+Backend выполняет server-side exchange в `https://oauth.telegram.org/token` с `grant_type=authorization_code`, Basic Authorization по `TELEGRAM_LOGIN_CLIENT_ID:TELEGRAM_LOGIN_CLIENT_SECRET`, `redirect_uri` и `code_verifier`. Полученный `id_token` проверяется через Telegram JWKS `https://oauth.telegram.org/.well-known/jwks.json`: подпись, `iss=https://oauth.telegram.org`, `aud=TELEGRAM_LOGIN_CLIENT_ID`, срок действия и `nonce`.
+
+После проверки backend ищет пользователя по `telegramId`, при отсутствии создает пользователя, затем возвращает обычный access token приложения:
+
+```json
+{
+  "user": {
+    "id": "clx...",
+    "role": "user",
+    "email": "tg_123456789@telegram.local",
+    "phone": null,
+    "nickname": "telegram_user",
+    "avatarUrl": "https://...",
+    "telegramId": "123456789"
+  },
+  "token": "<jwt>"
+}
+```
+
+Env:
+
+```dotenv
+TELEGRAM_LOGIN_CLIENT_ID=1234567890
+TELEGRAM_LOGIN_CLIENT_SECRET=change-me
+```
+
+`@BotFather` -> `Bot Settings` -> `Web Login` -> `Allowed URLs`:
+
+```text
+https://YOUR_DOMAIN/auth/telegram/callback
+```
+
+Для локальной проверки используйте HTTPS tunnel, например ngrok:
+
+```text
+https://YOUR_NGROK_DOMAIN/auth/telegram/callback
+```
+
 ### `POST /api/auth/signup`
 
 Регистрирует пользователя с email/password.

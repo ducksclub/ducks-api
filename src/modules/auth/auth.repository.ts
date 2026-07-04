@@ -69,6 +69,14 @@ export class AuthRepository {
     })
   }
 
+  updateTelegramProfile(userId: string, data: { avatarUrl?: string | null }) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
+      select: publicUserSelect,
+    })
+  }
+
   updateTelegramLocalUserCredentials(userId: string, email: string, passwordHash: string) {
     return this.prisma.user.update({
       where: { id: userId },

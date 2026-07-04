@@ -34,4 +34,9 @@ export class AuthController {
     const data = await this.service.signInWithTelegram(req.body)
     res.json(data)
   }
+
+  signInWithTelegramOidc = async (req: Request, res: Response) => {
+    const data = await this.service.signInWithTelegramOidc(req.body)
+    res.json(data)
+  }
 }

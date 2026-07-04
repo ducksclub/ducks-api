@@ -1,7 +1,7 @@
 import { WarmupService } from '../warmups/warmup.service'
 import { AuthEmailService } from './auth-email.service'
 import { AuthRepository } from './auth.repository'
-import { createRemoteJWKSet, jwtVerify } from 'jose'
+import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
 
 import { Roles } from '../../common/types/domain'
 import {
@@ -31,6 +31,7 @@ import type {
   NicknameAvailabilityDto,
   ResetPasswordDto,
   SignInDto,
+  SignInWithTelegramOidcDto,
   SignInWithTelegramDto,
   SignUpDto,
 } from './auth.types'
@@ -39,6 +40,18 @@ import { env } from '../../config/env'
 const PASSWORD_RESET_TOKEN_TTL_MS = 30 * 60 * 1000
 const PASSWORD_RESET_REQUEST_MESSAGE = 'Мы отправили письмо для восстановления пароля'
 const PASSWORD_RESET_FAILED_REQUEST_MESSAGE = 'Аккаунт с указанной почтой не найден'
+const TELEGRAM_ISSUER = 'https://oauth.telegram.org'
+const TELEGRAM_TOKEN_ENDPOINT = 'https://oauth.telegram.org/token'
+const TELEGRAM_JWKS = createRemoteJWKSet(
+  new URL('https://oauth.telegram.org/.well-known/jwks.json'),
+)
+
+type TelegramTokenResponse = {
+  access_token?: string
+  token_type?: string
+  expires_in?: number
+  id_token?: string
+}
 
 export class AuthService {
   private readonly repository: AuthRepository
@@ -204,57 +217,9 @@ export class AuthService {
 
   async signInWithTelegram(dto: SignInWithTelegramDto) {
     try {
-      const JWKS = createRemoteJWKSet(new URL('https://oauth.telegram.org/.well-known/jwks.json'))
-      const { payload } = await jwtVerify(dto.idToken, JWKS, {
-        issuer: 'https://oauth.telegram.org',
-        audience: env.TELEGRAM_CLIENT_ID,
-      })
-      const telegramId = getRequiredTelegramIdClaim(payload.id)
-      const existingUser = await this.repository.findByTelegramId(telegramId)
+      const payload = await this.verifyTelegramIdToken(dto.idToken)
 
-      if (existingUser) {
-        await this.warmupService.startAbandonedRegistrationWarmup(existingUser.id)
-
-        return {
-          user: existingUser,
-          token: signAccessToken({
-            id: existingUser.id,
-            role: existingUser.role as Role,
-            email: existingUser.email,
-            nickname: existingUser.nickname,
-          }),
-        }
-      }
-
-      const nickname = await createAvailableTelegramNickname(
-        getOptionalStringClaim(payload.preferred_username) ??
-          getOptionalStringClaim(payload.name) ??
-          getOptionalStringClaim(payload.given_name) ??
-          `tg_user_${telegramId}`,
-        telegramId,
-        (candidate) => this.repository.findByNickname(candidate),
-      )
-      const user = await this.repository.createUser({
-        email: `tg_${telegramId}@telegram.local`,
-        nickname,
-        avatarUrl: getOptionalStringClaim(payload.picture) ?? null,
-        passwordHash: await hashPassword('telegram-password'),
-        phone: null,
-        role: Roles.user,
-        telegramId,
-      })
-
-      await this.warmupService.startAbandonedRegistrationWarmup(user.id)
-
-      return {
-        user,
-        token: signAccessToken({
-          id: user.id,
-          role: user.role as Role,
-          email: user.email,
-          nickname: user.nickname,
-        }),
-      }
+      return await this.signInWithVerifiedTelegramPayload(payload)
     } catch (error) {
       if (error instanceof AppError) {
         throw error
@@ -271,5 +236,147 @@ export class AuthService {
       console.error('[AuthService] Telegram sign-in failed', error)
       throw internalServerError('Не удалось авторизоваться через Telegram')
     }
+  }
+
+  async signInWithTelegramOidc(dto: SignInWithTelegramOidcDto) {
+    try {
+      const idToken = await this.exchangeTelegramAuthorizationCode(dto)
+      const payload = await this.verifyTelegramIdToken(idToken, dto.nonce)
+
+      return await this.signInWithVerifiedTelegramPayload(payload)
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error
+      }
+
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw conflict('Пользователь с такими данными уже существует')
+      }
+
+      if (isTelegramTokenError(error)) {
+        throw unauthorized('Telegram id_token не прошёл проверку')
+      }
+
+      console.error('[AuthService] Telegram OIDC sign-in failed', error)
+      throw internalServerError('Не удалось авторизоваться через Telegram')
+    }
+  }
+
+  private async exchangeTelegramAuthorizationCode(dto: SignInWithTelegramOidcDto) {
+    const clientId = env.TELEGRAM_LOGIN_CLIENT_ID
+    const clientSecret = env.TELEGRAM_LOGIN_CLIENT_SECRET
+
+    if (!clientSecret) {
+      throw internalServerError('Не настроен Telegram Login Client Secret')
+    }
+
+    const body = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: dto.code,
+      redirect_uri: dto.redirectUri,
+      client_id: clientId,
+      code_verifier: dto.codeVerifier,
+    })
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+
+    let response: Response
+
+    try {
+      response = await fetch(TELEGRAM_TOKEN_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body,
+      })
+    } catch {
+      throw badRequest('Telegram token exchange failed')
+    }
+
+    if (!response.ok) {
+      throw badRequest('Telegram token exchange failed')
+    }
+
+    let tokenResponse: TelegramTokenResponse
+
+    try {
+      tokenResponse = (await response.json()) as TelegramTokenResponse
+    } catch {
+      throw badRequest('Telegram token exchange failed')
+    }
+
+    if (!tokenResponse.id_token) {
+      throw unauthorized('Telegram id_token не прошёл проверку')
+    }
+
+    return tokenResponse.id_token
+  }
+
+  private async verifyTelegramIdToken(idToken: string, nonce?: string) {
+    const { payload } = await jwtVerify(idToken, TELEGRAM_JWKS, {
+      issuer: TELEGRAM_ISSUER,
+      audience: env.TELEGRAM_LOGIN_CLIENT_ID,
+    })
+
+    if (nonce && payload.nonce !== nonce) {
+      throw unauthorized('Telegram id_token не прошёл проверку')
+    }
+
+    return payload
+  }
+
+  private async signInWithVerifiedTelegramPayload(payload: JWTPayload) {
+    const telegramId = getRequiredTelegramIdClaim(payload.id ?? payload.sub)
+    const existingUser = await this.repository.findByTelegramId(telegramId)
+    const avatarUrl = getOptionalStringClaim(payload.picture) ?? null
+
+    if (existingUser) {
+      const user =
+        avatarUrl && avatarUrl !== existingUser.avatarUrl
+          ? await this.repository.updateTelegramProfile(existingUser.id, { avatarUrl })
+          : existingUser
+
+      await this.warmupService.startAbandonedRegistrationWarmup(user.id)
+
+      return {
+        user,
+        token: this.createAccessToken(user),
+      }
+    }
+
+    const nickname = await createAvailableTelegramNickname(
+      getOptionalStringClaim(payload.preferred_username) ??
+        getOptionalStringClaim(payload.name) ??
+        getOptionalStringClaim(payload.given_name) ??
+        `tg_user_${telegramId}`,
+      telegramId,
+      (candidate) => this.repository.findByNickname(candidate),
+    )
+    const user = await this.repository.createUser({
+      email: `tg_${telegramId}@telegram.local`,
+      nickname,
+      avatarUrl,
+      passwordHash: await hashPassword('telegram-password'),
+      phone: null,
+      role: Roles.user,
+      telegramId,
+    })
+
+    await this.warmupService.startAbandonedRegistrationWarmup(user.id)
+
+    return {
+      user,
+      token: this.createAccessToken(user),
+    }
+  }
+
+  private createAccessToken(user: { id: string; role: string; email: string; nickname: string }) {
+    return signAccessToken({
+      id: user.id,
+      role: user.role as Role,
+      email: user.email,
+      nickname: user.nickname,
+    })
   }
 }

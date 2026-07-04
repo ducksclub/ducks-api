@@ -3,7 +3,7 @@ import tsParser from '@typescript-eslint/parser'
 
 export default [
   {
-    ignores: ['dist', 'node_modules'],
+    ignores: ['dist', 'node_modules', '*.config.ts'],
   },
   {
     files: ['**/*.ts'],
@@ -15,6 +15,7 @@ export default [
     rules: {
       ...tseslint.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
 ]

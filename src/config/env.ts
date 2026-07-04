@@ -33,9 +33,16 @@ const envSchema = z.object({
   PUBLIC_SITE_URL: z.string().url().default('http://localhost:3000'),
   TELEGRAM_BOT_USERNAME: z.string().min(1),
   TELEGRAM_CLIENT_ID: z.string().min(1),
+  TELEGRAM_LOGIN_CLIENT_ID: z.string().min(1).optional(),
+  TELEGRAM_LOGIN_CLIENT_SECRET: z.string().min(1).optional(),
 
   MAILTRAP_TOKEN: z.string().min(1),
   ADMIN_EMAIL: z.string().email(),
 })
 
-export const env = envSchema.parse(process.env)
+const parsedEnv = envSchema.parse(process.env)
+
+export const env = {
+  ...parsedEnv,
+  TELEGRAM_LOGIN_CLIENT_ID: parsedEnv.TELEGRAM_LOGIN_CLIENT_ID ?? parsedEnv.TELEGRAM_CLIENT_ID,
+}
