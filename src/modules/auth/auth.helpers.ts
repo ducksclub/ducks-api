@@ -57,6 +57,32 @@ export function getTelegramWebAppUserFromInitData(initData?: string): TelegramWe
   return parseTelegramWebAppUser(initData)
 }
 
+export function getRequiredTelegramIdClaim(value: unknown) {
+  if (typeof value === 'string' && value.trim()) {
+    return value.trim()
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value)
+  }
+
+  throw unauthorized('Telegram id отсутствует в данных авторизации')
+}
+
+export function getOptionalStringClaim(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+export function isTelegramTokenError(error: unknown) {
+  return (
+    error instanceof Error &&
+    (error.name.startsWith('JWT') ||
+      error.name === 'JOSEError' ||
+      error.message.includes('"aud"') ||
+      error.message.includes('"iss"'))
+  )
+}
+
 export const publicUserSelect = {
   id: true,
   role: true,
@@ -80,22 +106,37 @@ export function toPublicUser(user: UserWithPassword): PublicUser {
 }
 
 const maxNicknameLength = 30
+const minNicknameLength = 3
 const maxNicknameAttempts = 20
 
 type NicknameExists = (nickname: string) => Promise<unknown>
+
+function normalizeTelegramNickname(baseNickname: string, telegramId: string) {
+  const normalized = baseNickname.trim().replace(/^@/, '')
+  const fallback = `tg_user_${telegramId}`
+  const nickname = normalized.length >= minNicknameLength ? normalized : fallback
+
+  return nickname.slice(0, maxNicknameLength)
+}
 
 export async function createAvailableTelegramNickname(
   baseNickname: string,
   telegramId: string,
   nicknameExists: NicknameExists,
 ) {
-  if (!(await nicknameExists(baseNickname))) {
-    return baseNickname
+  const normalizedBaseNickname = normalizeTelegramNickname(baseNickname, telegramId)
+
+  if (!(await nicknameExists(normalizedBaseNickname))) {
+    return normalizedBaseNickname
   }
 
   for (let attempt = 0; attempt < maxNicknameAttempts; attempt += 1) {
     const suffix = attempt === 0 ? telegramId : `${telegramId}_${attempt}`
-    const nickname = `${baseNickname.slice(0, maxNicknameLength - suffix.length - 1)}_${suffix}`
+    const availableBaseLength = Math.max(1, maxNicknameLength - suffix.length - 1)
+    const nickname = `${normalizedBaseNickname.slice(0, availableBaseLength)}_${suffix}`.slice(
+      0,
+      maxNicknameLength,
+    )
 
     if (!(await nicknameExists(nickname))) {
       return nickname
