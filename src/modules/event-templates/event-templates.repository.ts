@@ -7,6 +7,10 @@ export class EventTemplatesRepository {
     return this.prisma.event.findMany({
       where,
       orderBy: { startsAt: 'asc' },
+      omit: {
+        imageHash: true,
+        isTemplate: true,
+      },
     })
   }
 }
