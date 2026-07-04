@@ -1,7 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client'
 import { EventStatuses, RegistrationStatuses } from '../../../common/types/domain.js'
-import { getPagination } from '../../../common/utils/pagination.js'
-import type { EventListQuery } from '../events.types.js'
 
 const registeredCountInclude = Prisma.validator<Prisma.EventInclude>()({
   _count: {
@@ -43,25 +41,6 @@ export class EventsRepository {
       },
       include: registeredCountInclude,
     })
-  }
-
-  findManyTemplates(where: Prisma.EventWhereInput, pagination: EventListQuery) {
-    return this.prisma.event.findMany({
-      where,
-      ...getPagination(pagination),
-      orderBy: { startsAt: 'asc' },
-    })
-  }
-
-  countMany(where: Prisma.EventWhereInput) {
-    return this.prisma.event.count({ where })
-  }
-
-  listWithTotal<T>(
-    eventsQuery: Prisma.PrismaPromise<T[]>,
-    totalQuery: Prisma.PrismaPromise<number>,
-  ) {
-    return this.prisma.$transaction([eventsQuery, totalQuery])
   }
 
   create(data: Prisma.EventCreateInput) {

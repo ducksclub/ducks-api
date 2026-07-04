@@ -19,6 +19,7 @@ import { usersRouter } from './modules/users/users.routes'
 import { uploadRouter } from './modules/upload/upload.routes'
 import { contactRouter } from './modules/contact/contact.routes'
 import { broadcastRouter } from './modules/broadcasts/broadcast.routes'
+import { eventTemplatesRouter } from './modules/event-templates/event-templates.routes'
 
 export const app = express()
 
@@ -49,6 +50,7 @@ app.use('/api/contact', contactRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/events', eventsRouter)
+app.use('/api/events-templates', eventTemplatesRouter)
 app.use('/api/ratings', ratingsRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/content', contentRouter)

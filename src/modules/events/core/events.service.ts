@@ -1,5 +1,4 @@
 import { notFound } from '../../../common/errors/app-error'
-import { paginated } from '../../../common/utils/pagination'
 import { EventRegistrationsService } from '../registrations/event-registrations.service'
 import { EventRemindersService } from '../reminders/event-reminders.service'
 import { EventResultsService } from '../results/event-results.service'
@@ -50,21 +49,6 @@ export class EventsService {
     const where = buildEventListWhere(query, false)
     const events = await this.repository.findManyWithCounts(where)
     return events.map((event) => mapEventWithPokerSeatLayout(event))
-  }
-
-  async listTemplates(query: EventListQuery) {
-    const where = buildEventListWhere(query, true)
-    const pagination = {
-      page: query.page,
-      limit: query.limit,
-    }
-
-    const [events, total] = await this.repository.listWithTotal(
-      this.repository.findManyTemplates(where, query),
-      this.repository.countMany(where),
-    )
-
-    return paginated(events, total, pagination)
   }
 
   async listMy(query: EventListQuery, userId: string) {

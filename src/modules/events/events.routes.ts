@@ -16,7 +16,6 @@ import {
   listActiveEvents,
   listEvents,
   listMyEvents,
-  listTemplates,
   listUpcomingEvents,
   registerForEvent,
   registrationCheckEvent,
@@ -35,11 +34,6 @@ import {
 export const eventsRouter = Router()
 
 eventsRouter.get('/', validate({ query: eventListQuerySchema }), asyncHandler(listEvents))
-eventsRouter.get(
-  '/templates',
-  validate({ query: eventListQuerySchema }),
-  asyncHandler(listTemplates),
-)
 eventsRouter.get(
   '/me',
   authenticate,
