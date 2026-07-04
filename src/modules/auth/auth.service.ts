@@ -241,7 +241,7 @@ export class AuthService {
   async signInWithTelegramOidc(dto: SignInWithTelegramOidcDto) {
     try {
       const idToken = await this.exchangeTelegramAuthorizationCode(dto)
-      const payload = await this.verifyTelegramIdToken(idToken, dto.nonce)
+      const payload = await this.verifyTelegramIdToken(idToken)
 
       return await this.signInWithVerifiedTelegramPayload(payload)
     } catch (error) {
@@ -313,15 +313,11 @@ export class AuthService {
     return tokenResponse.id_token
   }
 
-  private async verifyTelegramIdToken(idToken: string, nonce?: string) {
+  private async verifyTelegramIdToken(idToken: string) {
     const { payload } = await jwtVerify(idToken, TELEGRAM_JWKS, {
       issuer: TELEGRAM_ISSUER,
       audience: env.TELEGRAM_LOGIN_CLIENT_ID,
     })
-
-    if (nonce && payload.nonce !== nonce) {
-      throw unauthorized('Telegram id_token не прошёл проверку')
-    }
 
     return payload
   }

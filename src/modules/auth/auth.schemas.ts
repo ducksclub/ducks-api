@@ -29,7 +29,6 @@ export const signInWithTelegramOidcSchema = z.object({
   code: z.string().trim().min(1),
   codeVerifier: z.string().trim().min(43).max(128),
   redirectUri: z.string().url(),
-  nonce: z.string().trim().min(1).optional(),
 })
 
 export const telegramWebAppUserSchema = z.object({

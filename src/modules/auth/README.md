@@ -67,12 +67,11 @@ Request body:
 {
   "code": "<telegram_authorization_code>",
   "codeVerifier": "<pkce_code_verifier>",
-  "redirectUri": "https://YOUR_DOMAIN/auth/telegram/callback",
-  "nonce": "<nonce>"
+  "redirectUri": "https://YOUR_DOMAIN/auth/telegram/callback"
 }
 ```
 
-Backend выполняет server-side exchange в `https://oauth.telegram.org/token` с `grant_type=authorization_code`, Basic Authorization по `TELEGRAM_LOGIN_CLIENT_ID:TELEGRAM_LOGIN_CLIENT_SECRET`, `redirect_uri` и `code_verifier`. Полученный `id_token` проверяется через Telegram JWKS `https://oauth.telegram.org/.well-known/jwks.json`: подпись, `iss=https://oauth.telegram.org`, `aud=TELEGRAM_LOGIN_CLIENT_ID`, срок действия и `nonce`.
+Backend выполняет server-side exchange в `https://oauth.telegram.org/token` с `grant_type=authorization_code`, Basic Authorization по `TELEGRAM_LOGIN_CLIENT_ID:TELEGRAM_LOGIN_CLIENT_SECRET`, `redirect_uri` и `code_verifier`. Полученный `id_token` проверяется через Telegram JWKS `https://oauth.telegram.org/.well-known/jwks.json`: подпись, `iss=https://oauth.telegram.org`, `aud=TELEGRAM_LOGIN_CLIENT_ID` и срок действия.
 
 После проверки backend ищет пользователя по `telegramId`, при отсутствии создает пользователя, затем возвращает обычный access token приложения:
 
