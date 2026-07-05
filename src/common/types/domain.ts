@@ -57,3 +57,11 @@ export const WarmupScenarioKeys = {
 } as const
 
 export type WarmupScenarioKey = (typeof WarmupScenarioKeys)[keyof typeof WarmupScenarioKeys]
+
+export const ReminderTypes = {
+  DAY_BEFORE: '24h',
+  TWO_HOURS_BEFORE: '2h',
+  FIFTEEN_MINUTES_BEFORE: '15m',
+} as const
+
+export type ReminderType = (typeof ReminderTypes)[keyof typeof ReminderTypes]
