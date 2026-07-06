@@ -1,0 +1,1 @@
+export const EVENT_SEAT_REVEAL_WINDOW_MS = 15 * 60 * 1000
