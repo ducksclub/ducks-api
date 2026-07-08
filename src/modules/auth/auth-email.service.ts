@@ -10,7 +10,7 @@ export class AuthEmailService {
   async sendPasswordResetMail(data: { email: string; resetUrl: string }) {
     await this.transport.send({
       from: {
-        email: 'hello@demomailtrap.co',
+        email: 'no-reply@ducksclub.space',
         name: "DUCK'S GameClub",
       },
       to: [{ email: data.email }],
