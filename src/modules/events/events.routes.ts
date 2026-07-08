@@ -1,104 +1,40 @@
 import { Router } from 'express'
-import { authenticate, authorize } from '../../common/middleware/auth.js'
-import { validate } from '../../common/middleware/validate.js'
-import { Roles } from '../../common/types/domain.js'
-import { asyncHandler } from '../../common/utils/async-handler.js'
+import { Roles } from '../../common/types/domain'
+import { validate } from '../../common/middleware/validate'
+import { asyncHandler } from '../../common/utils/async-handler'
+import { authenticate, authorize } from '../../common/middleware/auth'
 
 import {
-  cancelEventRegistration,
   createEvent,
   deleteEvent,
-  finalizeEvent,
   getEvent,
-  getEventParticipants,
-  getMyEventSeat,
-  getReminders,
   listActiveEvents,
   listEvents,
-  listMyEvents,
   listUpcomingEvents,
-  registerForEvent,
-  registrationCheckEvent,
-  reorderParticipants,
   updateEvent,
-} from './events.controller.js'
+} from './events.controller'
 
 import {
   createEventSchema,
   eventIdParamsSchema,
   eventListQuerySchema,
-  reorderParticipantsSchema,
   updateEventSchema,
-} from './events.schemas.js'
+} from './events.schemas'
 
 export const eventsRouter = Router()
 
 eventsRouter.get('/', validate({ query: eventListQuerySchema }), asyncHandler(listEvents))
-eventsRouter.get(
-  '/me',
-  authenticate,
-  validate({ query: eventListQuerySchema }),
-  asyncHandler(listMyEvents),
-)
-eventsRouter.get('/reminders', asyncHandler(getReminders))
+
+eventsRouter.get('/upcoming', asyncHandler(listUpcomingEvents))
+
 eventsRouter.get(
   '/active-now',
   // authenticate,
   // authorize(Roles.admin),
   asyncHandler(listActiveEvents),
 )
-eventsRouter.get('/upcoming', asyncHandler(listUpcomingEvents))
+
 eventsRouter.get('/:id', validate({ params: eventIdParamsSchema }), asyncHandler(getEvent))
-
-eventsRouter.get(
-  '/:id/registration',
-  authenticate,
-  validate({ params: eventIdParamsSchema }),
-  asyncHandler(registrationCheckEvent),
-)
-eventsRouter.get(
-  '/:id/my-seat',
-  authenticate,
-  validate({ params: eventIdParamsSchema }),
-  asyncHandler(getMyEventSeat),
-)
-eventsRouter.post(
-  '/:id/register',
-  authenticate,
-  validate({ params: eventIdParamsSchema }),
-  asyncHandler(registerForEvent),
-)
-eventsRouter.delete(
-  '/:id/register',
-  authenticate,
-  validate({ params: eventIdParamsSchema }),
-  asyncHandler(cancelEventRegistration),
-)
-
-// =========================
-// ADMIN (ендпоинты ниже не проверял)
-// =========================
-eventsRouter.post(
-  '/:id/finalize',
-  authenticate,
-  authorize(Roles.admin),
-  asyncHandler(finalizeEvent),
-)
-
-eventsRouter.get(
-  '/:id/participants',
-  // authenticate,
-  // authorize(Roles.admin),
-  asyncHandler(getEventParticipants),
-)
-
-eventsRouter.patch(
-  '/:id/participants/reorder',
-  authenticate,
-  authorize(Roles.admin),
-  validate({ body: reorderParticipantsSchema }),
-  asyncHandler(reorderParticipants),
-)
 
 eventsRouter.post(
   '/',

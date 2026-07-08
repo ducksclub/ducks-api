@@ -1,5 +1,5 @@
 import { formatDateTime } from '../common/utils/formatDatetime'
-import type { RegistrationEvent } from '../modules/events/events.types'
+import type { RegistrationEvent } from '../modules/event-registrations/event-registrations.types'
 
 export const createEventRegistrationMessage = (event: RegistrationEvent) => {
   return (
