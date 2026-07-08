@@ -67,4 +67,10 @@ export class EventsService {
 
     return events.map((event) => mapEventWithPokerSeatLayout(event))
   }
+
+  async listTemplates() {
+    const events = await this.repository.findTemplates()
+
+    return events.map((event) => mapEventWithPokerSeatLayout(event))
+  }
 }

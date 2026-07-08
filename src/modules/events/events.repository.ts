@@ -97,4 +97,13 @@ export class EventsRepository {
       },
     })
   }
+
+  findTemplates() {
+    return this.prisma.event.findMany({
+      where: {
+        isTemplate: true,
+      },
+      orderBy: { startsAt: 'asc' },
+    })
+  }
 }

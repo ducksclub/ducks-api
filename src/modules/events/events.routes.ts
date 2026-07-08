@@ -10,6 +10,7 @@ import {
   getEvent,
   listActiveEvents,
   listEvents,
+  listTemplates,
   listUpcomingEvents,
   updateEvent,
 } from './events.controller'
@@ -26,6 +27,7 @@ export const eventsRouter = Router()
 eventsRouter.get('/', validate({ query: eventListQuerySchema }), asyncHandler(listEvents))
 
 eventsRouter.get('/upcoming', asyncHandler(listUpcomingEvents))
+eventsRouter.get('/templates', asyncHandler(listTemplates))
 
 eventsRouter.get(
   '/active-now',

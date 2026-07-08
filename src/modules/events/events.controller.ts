@@ -41,3 +41,8 @@ export const listUpcomingEvents = async (req: Request, res: Response) => {
   const data = await service.listUpcoming()
   res.json({ data })
 }
+
+export const listTemplates = async (req: Request, res: Response) => {
+  const data = await service.listTemplates()
+  res.json({ data })
+}
