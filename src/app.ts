@@ -20,6 +20,10 @@ import { uploadRouter } from './modules/upload/upload.routes'
 import { contactRouter } from './modules/contact/contact.routes'
 import { broadcastRouter } from './modules/broadcasts/broadcast.routes'
 import { eventTemplatesRouter } from './modules/event-templates/event-templates.routes'
+import { myEventsRouter } from './modules/my-events/my-events.routes'
+import { eventResultsRouter } from './modules/event-results/event-results.routes'
+import { eventRemindersRouter } from './modules/event-reminders/event-reminders.routes'
+import { eventRegistrationsRouter } from './modules/event-registrations/event-registrations.routes'
 
 export const app = express()
 
@@ -50,7 +54,11 @@ app.use('/api/contact', contactRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/events', eventsRouter)
-app.use('/api/events-templates', eventTemplatesRouter)
+app.use('/api/my-events', myEventsRouter)
+app.use('/api/event-results', eventResultsRouter)
+app.use('/api/event-templates', eventTemplatesRouter)
+app.use('/api/event-reminders', eventRemindersRouter)
+app.use('/api/event-registrations', eventRegistrationsRouter)
 app.use('/api/ratings', ratingsRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/content', contentRouter)
