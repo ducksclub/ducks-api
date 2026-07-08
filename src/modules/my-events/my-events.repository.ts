@@ -5,7 +5,10 @@ export class MyEventsRepository {
 
   findMany(where: Prisma.EventWhereInput) {
     return this.prisma.event.findMany({
-      where,
+      where: {
+        ...where,
+        isTemplate: false,
+      },
       orderBy: { startsAt: 'asc' },
       omit: {
         imageHash: true,
