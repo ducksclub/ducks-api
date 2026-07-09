@@ -192,6 +192,13 @@ model ContentPage {
   updatedAt DateTime @updatedAt
 }
 
+model ClientUiSetting {
+  id        String   @id @default("default")
+  type      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum WarmupStatus {
   active
   completed

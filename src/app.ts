@@ -19,6 +19,7 @@ import { usersRouter } from './modules/users/users.routes'
 import { uploadRouter } from './modules/upload/upload.routes'
 import { contactRouter } from './modules/contact/contact.routes'
 import { broadcastRouter } from './modules/broadcasts/broadcast.routes'
+import { clientUiRouter } from './modules/client-ui/client-ui.routes'
 import { eventTemplatesRouter } from './modules/event-templates/event-templates.routes'
 import { myEventsRouter } from './modules/my-events/my-events.routes'
 import { eventResultsRouter } from './modules/event-results/event-results.routes'
@@ -63,6 +64,7 @@ app.use('/api/ratings', ratingsRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/content', contentRouter)
 app.use('/api/broadcasts', broadcastRouter)
+app.use('/api/client-ui', clientUiRouter)
 
 app.use((_req, res) => {
   res.status(404).json({
