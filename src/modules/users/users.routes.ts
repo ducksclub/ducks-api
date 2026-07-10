@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authenticate } from '../../common/middleware/auth'
+import { authenticate, authorize } from '../../common/middleware/auth'
 import { asyncHandler } from '../../common/utils/async-handler'
 import { UserController } from './users.controller'
 import { validate } from '../../common/middleware/validate'
@@ -9,11 +9,15 @@ import {
   getProfileByTelegramIdParamsSchema,
   updateProfileSchema,
 } from './users.schemas'
+import { Roles } from '../../common/types/domain'
 
 export const usersRouter = Router()
 export const userController = new UserController()
 
+usersRouter.get('/', authenticate, authorize(Roles.admin), asyncHandler(userController.get))
+
 usersRouter.get('/me', authenticate, asyncHandler(userController.getMe))
+
 usersRouter.patch(
   '/me',
   authenticate,

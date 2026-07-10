@@ -20,6 +20,11 @@ export class UsersService {
     return user
   }
 
+  async getProfiles() {
+    const profiles = await this.authRepository.findAll()
+    return profiles
+  }
+
   async getPublicProfile(userId: string) {
     const user = await this.repository.findProfileById(userId)
     if (!user) throw notFound('Пользователь не найден')

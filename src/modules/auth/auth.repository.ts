@@ -5,6 +5,17 @@ import type { PrismaClient } from '@prisma/client'
 export class AuthRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
+  findAll() {
+    return this.prisma.user.findMany({
+      omit: {
+        passwordHash: true,
+        sourceCode: true,
+        sourceType: true,
+        promoLinkId: true,
+      },
+    })
+  }
+
   findById(id: string) {
     return this.prisma.user.findUnique({
       where: { id },

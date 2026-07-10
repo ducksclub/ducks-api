@@ -28,6 +28,7 @@ import { eventRegistrationsRouter } from './modules/event-registrations/event-re
 
 export const app = express()
 
+app.set('trust proxy', 1)
 app.use(
   helmet({
     crossOriginResourcePolicy: false,

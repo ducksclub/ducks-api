@@ -11,6 +11,11 @@ import type {
 export class UserController {
   private readonly service = new UsersService(prisma)
 
+  get = async (_req: Request, res: Response) => {
+    const profiles = await this.service.getProfiles()
+    res.json(profiles)
+  }
+
   getMe = async (req: Request, res: Response) => {
     if (!req.user) throw unauthorized('Вы не авторизованы')
     const profile = await this.service.getProfile(req.user.id)
