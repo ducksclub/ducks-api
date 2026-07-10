@@ -23,3 +23,18 @@ export const changeClientUiSchema = z
   .strict()
 
 export type ChangeClientUiDto = z.infer<typeof changeClientUiSchema>
+
+export const clientUiRegistrationQuerySchema = z
+  .object({
+    type: clientUiTypeSchema,
+  })
+  .strict()
+
+export const createClientUiRegistrationSchema = z
+  .object({
+    type: clientUiTypeSchema,
+  })
+  .strict()
+
+export type ClientUiRegistrationQueryDto = z.infer<typeof clientUiRegistrationQuerySchema>
+export type CreateClientUiRegistrationDto = z.infer<typeof createClientUiRegistrationSchema>
