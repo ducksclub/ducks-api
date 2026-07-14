@@ -25,6 +25,9 @@ export class AuthRepository {
         sourceType: true,
         promoLinkId: true,
       },
+      include: {
+        ratings: true,
+      },
     })
   }
 

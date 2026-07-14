@@ -47,10 +47,15 @@ export const manageParticipantSchema = z.object({
 })
 
 export const reorderParticipantsSchema = z.object({
-  participants: z.array(
-    z.object({
-      userId: z.string().min(1),
-      position: z.number().int().min(1),
-    }),
-  ),
+  participants: z
+    .array(
+      z.object({
+        userId: z.string().min(1),
+        points: z.number().int().min(0),
+      }),
+    )
+    .refine(
+      (participants) => new Set(participants.map(({ userId }) => userId)).size === participants.length,
+      { message: 'Participant userIds must be unique' },
+    ),
 })

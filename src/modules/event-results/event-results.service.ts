@@ -1,7 +1,6 @@
 import { conflict, notFound } from '../../common/errors/app-error.js'
 import { EventStatuses } from '../../common/types/domain.js'
 import { EventResultsRepository } from './event-results.repository.js'
-import { calculatePoints } from './event-scoring.helper.js'
 import type { EventPrismaClient, ReorderParticipantsDto } from '../events/events.types.js'
 
 export class EventResultsService {
@@ -34,12 +33,20 @@ export class EventResultsService {
 
       await Promise.all(
         dto.participants.map((participant) =>
-          this.repository.updateParticipantPosition(
+          this.repository.updateParticipantPoints(
             tx,
             eventId,
             participant.userId,
-            participant.position,
+            participant.points,
           ),
+        ),
+      )
+
+      const participants = await this.repository.findParticipantsByPoints(tx, eventId)
+
+      await Promise.all(
+        participants.map((participant, index) =>
+          this.repository.updateParticipantPosition(tx, participant.id, index + 1),
         ),
       )
 
@@ -57,15 +64,12 @@ export class EventResultsService {
       }
 
       const registrations = await this.repository.findRegisteredForFinalize(tx, eventId)
-      const playersCount = registrations.length
 
       for (const registration of registrations) {
-        const points = calculatePoints(registration.position ?? playersCount, playersCount)
-
         await this.repository.upsertRating(tx, {
           userId: registration.userId,
           gameType: event.gameType,
-          points,
+          points: registration.points,
         })
       }
 

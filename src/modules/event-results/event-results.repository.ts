@@ -42,11 +42,11 @@ export class EventResultsRepository {
     })
   }
 
-  updateParticipantPosition(
+  updateParticipantPoints(
     tx: Prisma.TransactionClient,
     eventId: string,
     userId: string,
-    position: number,
+    points: number,
   ) {
     return tx.eventRegistration.update({
       where: {
@@ -56,14 +56,38 @@ export class EventResultsRepository {
         },
       },
       data: {
-        position,
+        points,
       },
+    })
+  }
+
+  findParticipantsByPoints(tx: Prisma.TransactionClient, eventId: string) {
+    return tx.eventRegistration.findMany({
+      where: {
+        eventId,
+        status: RegistrationStatuses.registered,
+      },
+      orderBy: [{ points: 'desc' }, { createdAt: 'asc' }, { id: 'asc' }],
+    })
+  }
+
+  updateParticipantPosition(
+    tx: Prisma.TransactionClient,
+    registrationId: string,
+    position: number,
+  ) {
+    return tx.eventRegistration.update({
+      where: { id: registrationId },
+      data: { position },
     })
   }
 
   findParticipantsByPosition(tx: Prisma.TransactionClient, eventId: string) {
     return tx.eventRegistration.findMany({
-      where: { eventId },
+      where: {
+        eventId,
+        status: RegistrationStatuses.registered,
+      },
       include: { user: true },
       orderBy: { position: 'asc' },
     })

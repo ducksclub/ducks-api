@@ -1,0 +1,1 @@
+ALTER TABLE "EventRegistration" ADD COLUMN "points" INTEGER NOT NULL DEFAULT 0;

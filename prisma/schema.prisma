@@ -148,6 +148,7 @@ model EventRegistration {
   status      String    @default("PARTICIPANT")
   createdAt   DateTime  @default(now())
   cancelledAt DateTime?
+  points      Int       @default(0)
   position    Int?
   tableNumber Int?
   seatNumber  Int?
