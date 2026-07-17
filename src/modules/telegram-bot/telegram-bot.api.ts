@@ -15,9 +15,18 @@ export type EventRegistrationNotificationPayload = {
   telegramUserId: number
 }
 
-export async function sendEventNotification(payload: EventRegistrationNotificationPayload) {
+type SendEventNotificationOptions = {
+  throwOnError?: boolean
+  timeoutMs?: number
+}
+
+export async function sendEventNotification(
+  payload: EventRegistrationNotificationPayload,
+  options: SendEventNotificationOptions = {},
+) {
   try {
     const { data } = await axios.post(`${env.TELEGRAM_BOT_API_URL}/notification`, payload, {
+      timeout: options.timeoutMs ?? 10_000,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -33,9 +42,18 @@ export async function sendEventNotification(payload: EventRegistrationNotificati
         message: error.message,
       })
 
+      if (options.throwOnError) {
+        const responseData =
+          error.response?.data === undefined ? '' : `: ${JSON.stringify(error.response.data)}`
+
+        throw new Error(`${error.message}${responseData}`)
+      }
+
       return
     }
 
     console.error('Telegram bot notification failed', error)
+
+    if (options.throwOnError) throw error
   }
 }

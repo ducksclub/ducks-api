@@ -61,10 +61,16 @@ export class NotificationQueueService {
     })
 
     try {
-      await sendEventNotification({
-        telegramUserId: notification.telegramUserId,
-        message: notification.message,
-      })
+      await sendEventNotification(
+        {
+          telegramUserId: notification.telegramUserId,
+          message: notification.message,
+        },
+        {
+          throwOnError: true,
+          timeoutMs: 10_000,
+        },
+      )
 
       await this.prisma.notificationQueue.update({
         where: { id },
@@ -80,8 +86,8 @@ export class NotificationQueueService {
       await this.prisma.notificationQueue.update({
         where: { id },
         data: {
-          status: notification.attempts + 1 >= MAX_ATTEMPTS ? 'failed' : 'pending',
-          failedAt: notification.attempts + 1 >= MAX_ATTEMPTS ? new Date() : null,
+          status: notification.attempts >= MAX_ATTEMPTS ? 'failed' : 'pending',
+          failedAt: notification.attempts >= MAX_ATTEMPTS ? new Date() : null,
           error: message,
           scheduledAt: this.getNextRetryDate(message),
         },

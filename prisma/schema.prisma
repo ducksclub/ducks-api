@@ -38,6 +38,7 @@ model User {
   warmups               UserWarmup[]
   passwordResetTokens   PasswordResetToken[]
   clientUiRegistrations ClientUiRegistration[]
+  notifications         NotificationQueue[]
 
   @@index([role])
   @@index([promoLinkId])
@@ -252,9 +253,22 @@ enum NotificationType {
   event_reminder
 }
 
+model Broadcast {
+  id            String              @id @default(cuid())
+  message       String
+  totalUsers    Int
+  createdCount  Int
+  skippedCount  Int
+  createdAt     DateTime            @default(now())
+  notifications NotificationQueue[]
+
+  @@index([createdAt])
+}
+
 model NotificationQueue {
   id             String             @id @default(cuid())
   userId         String?
+  broadcastId    String?
   telegramUserId Int
   type           NotificationType
   status         NotificationStatus @default(pending)
@@ -265,9 +279,12 @@ model NotificationQueue {
   failedAt       DateTime?
   error          String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  broadcast Broadcast? @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
 
   @@index([status, scheduledAt])
   @@index([telegramUserId, status])
+  @@index([broadcastId, status])
 }
