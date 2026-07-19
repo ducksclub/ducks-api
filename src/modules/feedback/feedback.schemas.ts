@@ -8,4 +8,3 @@ export const feedbackCreateSchema = z.object({
 export const feedbackListQuerySchema = paginationSchema
 
 export type FeedbackCreateDto = z.infer<typeof feedbackCreateSchema>
-export type FeedbackListQuery = z.infer<typeof feedbackListQuerySchema>
