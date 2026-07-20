@@ -150,6 +150,7 @@ model EventRegistration {
   createdAt   DateTime  @default(now())
   cancelledAt DateTime?
   points      Int       @default(0)
+  bounty      Int       @default(0)
   position    Int?
   tableNumber Int?
   seatNumber  Int?

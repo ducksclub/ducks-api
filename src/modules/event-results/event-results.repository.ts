@@ -42,11 +42,12 @@ export class EventResultsRepository {
     })
   }
 
-  updateParticipantPoints(
+  updateParticipantResults(
     tx: Prisma.TransactionClient,
     eventId: string,
     userId: string,
     points: number,
+    bounty: number,
   ) {
     return tx.eventRegistration.update({
       where: {
@@ -57,6 +58,7 @@ export class EventResultsRepository {
       },
       data: {
         points,
+        bounty,
       },
     })
   }

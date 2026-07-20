@@ -52,6 +52,7 @@ export const reorderParticipantsSchema = z.object({
       z.object({
         userId: z.string().min(1),
         points: z.number().int().min(0),
+        bounty: z.number().int().min(0),
       }),
     )
     .refine(

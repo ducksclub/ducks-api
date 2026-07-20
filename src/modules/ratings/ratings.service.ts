@@ -26,7 +26,35 @@ export class RatingsService {
       }),
       this.prisma.rating.count({ where: { gameType } }),
     ])
-    return paginated(ratings, total, query)
+
+    const bountyTotals = ratings.length
+      ? await this.prisma.eventRegistration.groupBy({
+          by: ['userId'],
+          where: {
+            userId: { in: ratings.map(({ userId }) => userId) },
+            event: {
+              gameType,
+              status: 'completed',
+            },
+          },
+          _sum: {
+            bounty: true,
+          },
+        })
+      : []
+
+    const bountyByUserId = new Map(
+      bountyTotals.map(({ userId, _sum }) => [userId, _sum.bounty ?? 0]),
+    )
+
+    return paginated(
+      ratings.map((rating) => ({
+        ...rating,
+        bounty: bountyByUserId.get(rating.userId) ?? 0,
+      })),
+      total,
+      query,
+    )
   }
 
   async award(dto: AwardPointsDto) {

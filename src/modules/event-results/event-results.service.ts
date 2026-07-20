@@ -33,11 +33,12 @@ export class EventResultsService {
 
       await Promise.all(
         dto.participants.map((participant) =>
-          this.repository.updateParticipantPoints(
+          this.repository.updateParticipantResults(
             tx,
             eventId,
             participant.userId,
             participant.points,
+            participant.bounty,
           ),
         ),
       )
