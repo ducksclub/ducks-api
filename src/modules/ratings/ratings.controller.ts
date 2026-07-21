@@ -5,7 +5,7 @@ import { RatingsService } from "./ratings.service.js";
 const service = new RatingsService(prisma);
 
 export const getTop = async (req: Request, res: Response) => {
-  res.json(await service.top(req.params.game as never, req.query as never));
+  res.json(await service.top(req.params.game as never));
 };
 
 export const awardPoints = async (req: Request, res: Response) => {
