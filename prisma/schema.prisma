@@ -164,13 +164,14 @@ model EventRegistration {
 }
 
 model Rating {
-  id        String   @id @default(cuid())
-  userId    String
-  gameType  String
-  points    Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  userId           String
+  gameType         String
+  points           Int      @default(0)
+  bountyAdjustment Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, gameType])
   @@index([gameType, points])

@@ -42,9 +42,9 @@ export class RatingsService {
       bountyTotals.map(({ userId, _sum }) => [userId, _sum.bounty ?? 0]),
     );
 
-    return ratings.map((rating) => ({
+    return ratings.map(({ bountyAdjustment, ...rating }) => ({
       ...rating,
-      bounty: bountyByUserId.get(rating.userId) ?? 0,
+      bounty: (bountyByUserId.get(rating.userId) ?? 0) + bountyAdjustment,
     }));
   }
 

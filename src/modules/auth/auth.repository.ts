@@ -1,6 +1,6 @@
-import { publicUserSelect } from './auth.helpers'
-import type { PublicUser, UserWithPassword } from './auth.types'
-import type { PrismaClient } from '@prisma/client'
+import { publicUserSelect } from "./auth.helpers";
+import type { PublicUser, UserWithPassword } from "./auth.types";
+import type { PrismaClient } from "@prisma/client";
 
 export class AuthRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -13,7 +13,7 @@ export class AuthRepository {
         sourceType: true,
         promoLinkId: true,
       },
-    })
+    });
   }
 
   findById(id: string) {
@@ -26,15 +26,19 @@ export class AuthRepository {
         promoLinkId: true,
       },
       include: {
-        ratings: true,
+        ratings: {
+          omit: {
+            bountyAdjustment: true,
+          },
+        },
       },
-    })
+    });
   }
 
   findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
-    })
+    });
   }
 
   findByNickname(nickname: string) {
@@ -46,14 +50,14 @@ export class AuthRepository {
         sourceType: true,
         promoLinkId: true,
       },
-    })
+    });
   }
 
   findByTelegramId(telegramId: string) {
     return this.prisma.user.findUnique({
       where: { telegramId },
       select: publicUserSelect,
-    })
+    });
   }
 
   updatePassword(userId: string, passwordHash: string) {
@@ -61,26 +65,30 @@ export class AuthRepository {
       where: { id: userId },
       data: { passwordHash },
       select: publicUserSelect,
-    })
+    });
   }
 
-  createPasswordResetToken(data: { userId: string; tokenHash: string; expiresAt: Date }) {
+  createPasswordResetToken(data: {
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }) {
     return this.prisma.passwordResetToken.create({
       data,
-    })
+    });
   }
 
   findPasswordResetToken(tokenHash: string) {
     return this.prisma.passwordResetToken.findUnique({
       where: { tokenHash },
-    })
+    });
   }
 
   attachTelegramIdToUser(userId: string, telegramId: string) {
     return this.prisma.user.update({
       where: { id: userId },
       data: { telegramId },
-    })
+    });
   }
 
   updateTelegramProfile(userId: string, data: { avatarUrl?: string | null }) {
@@ -88,10 +96,14 @@ export class AuthRepository {
       where: { id: userId },
       data,
       select: publicUserSelect,
-    })
+    });
   }
 
-  updateTelegramLocalUserCredentials(userId: string, email: string, passwordHash: string) {
+  updateTelegramLocalUserCredentials(
+    userId: string,
+    email: string,
+    passwordHash: string,
+  ) {
     return this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -99,10 +111,10 @@ export class AuthRepository {
         passwordHash,
       },
       select: publicUserSelect,
-    })
+    });
   }
 
-  createUser(data: Omit<UserWithPassword, 'id'>): Promise<PublicUser> {
+  createUser(data: Omit<UserWithPassword, "id">): Promise<PublicUser> {
     return this.prisma.user.create({
       data: {
         role: data.role,
@@ -114,6 +126,6 @@ export class AuthRepository {
         passwordHash: data.passwordHash,
       },
       select: publicUserSelect,
-    })
+    });
   }
 }

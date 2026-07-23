@@ -19,6 +19,27 @@ API documentation is available at `http://localhost:4000/docs`.
 
 - [Auth module](src/modules/auth/README.md)
 
+## Admin user game stats
+
+Admin-only user endpoints provide the data contract for the rating and bounty table:
+
+- `GET /api/users` returns every user with a `ratings` item for each supported game. Each item
+  contains `gameType`, `points`, and `bounty`; missing results are returned as zeroes.
+- `PATCH /api/users/:id/stats/:game` sets absolute `points` and/or `bounty` values for one user
+  and game. The JSON body must contain at least one of these fields.
+
+Example:
+
+```json
+{
+  "points": 150,
+  "bounty": 3
+}
+```
+
+Both endpoints require an admin bearer token. Manual bounty changes are stored as adjustments,
+so completed event results remain unchanged.
+
 ## Scripts
 
 - `npm run dev` - start development server with watch mode

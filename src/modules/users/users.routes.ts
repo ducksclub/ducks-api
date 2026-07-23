@@ -8,6 +8,8 @@ import {
   getProfileByNicknameQuerySchema,
   getProfileByTelegramIdParamsSchema,
   updateProfileSchema,
+  updateUserGameStatsParamsSchema,
+  updateUserGameStatsSchema,
 } from './users.schemas'
 import { Roles } from '../../common/types/domain'
 
@@ -15,6 +17,17 @@ export const usersRouter = Router()
 export const userController = new UserController()
 
 usersRouter.get('/', authenticate, authorize(Roles.admin), asyncHandler(userController.get))
+
+usersRouter.patch(
+  '/:id/stats/:game',
+  authenticate,
+  authorize(Roles.admin),
+  validate({
+    params: updateUserGameStatsParamsSchema,
+    body: updateUserGameStatsSchema,
+  }),
+  asyncHandler(userController.updateGameStats),
+)
 
 usersRouter.get('/me', authenticate, asyncHandler(userController.getMe))
 

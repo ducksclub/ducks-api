@@ -1,0 +1,1 @@
+ALTER TABLE "Rating" ADD COLUMN "bountyAdjustment" INTEGER NOT NULL DEFAULT 0;

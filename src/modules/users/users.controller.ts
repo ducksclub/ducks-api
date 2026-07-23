@@ -6,6 +6,8 @@ import type {
   GetProfileByIdParamsDto,
   GetProfileByNicknameQueryDto,
   GetProfileByTelegramIdParamsDto,
+  UpdateUserGameStatsDto,
+  UpdateUserGameStatsParamsDto,
 } from './users.schemas'
 
 export class UserController {
@@ -26,6 +28,12 @@ export class UserController {
     if (!req.user) throw unauthorized()
     const updatedProfile = await this.service.updateProfile(req.body, req.user.id)
     res.json(updatedProfile)
+  }
+
+  updateGameStats = async (req: Request, res: Response) => {
+    const { id, game } = req.params as UpdateUserGameStatsParamsDto
+    const stats = await this.service.updateGameStats(id, game, req.body as UpdateUserGameStatsDto)
+    res.json(stats)
   }
 
   getProfileById = async (req: Request, res: Response) => {
